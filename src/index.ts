@@ -4,7 +4,7 @@ import { connectDB } from './services/database.services'
 import { defaultErrorHandler } from './middlewares/error.middlewares'
 
 const app = express()
-const PORT = 3000
+const PORT = 8386
 
 app.use(express.json())
 app.use('/users', usersRouter)

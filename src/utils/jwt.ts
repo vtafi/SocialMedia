@@ -1,5 +1,8 @@
-import jwt from 'jsonwebtoken'
+import { config } from 'dotenv'
+import jwt, { JwtPayload } from 'jsonwebtoken'
+import { userMessages } from '~/constants/messages'
 
+config()
 export const signToken = ({
   payload,
   privateKey = process.env.JWT_SECRET as string,
@@ -17,6 +20,24 @@ export const signToken = ({
         reject(new Error('Token signing failed'))
       } else {
         resolve(token as string)
+      }
+    })
+  })
+}
+
+export const verifyToken = ({
+  token,
+  publicKey = process.env.JWT_SECRET as string
+}: {
+  token: string
+  publicKey?: string
+}) => {
+  return new Promise<JwtPayload>((resolve, reject) => {
+    jwt.verify(token, publicKey, (err, decoded) => {
+      if (err) {
+        reject(new Error(userMessages.TOKEN_VERIFICATION_FAILED))
+      } else {
+        resolve(decoded as JwtPayload)
       }
     })
   })

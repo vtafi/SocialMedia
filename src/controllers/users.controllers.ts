@@ -28,6 +28,11 @@ export const registerController = async (
   return res.status(201).json({ message: 'User registered successfully', newUser })
 }
 
+export const logoutController = async (req: Request, res: Response) => {
+  // Implement logout logic here
+  res.status(200).json({ message: 'Logout successful' })
+}
+
 export const searchByEmailController = async (req: Request, res: Response) => {
   const email = req.body.email
   try {

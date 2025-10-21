@@ -17,5 +17,10 @@ export const userMessages = {
   EMAIL_REQUIRED: 'Email is required',
   PASSWORD_REQUIRED: 'Password is required',
   EMAIL_NOT_FOUND: 'Email not found in our records',
-  PASSWORD_INCORRECT: 'The password you entered is incorrect'
+  PASSWORD_INCORRECT: 'The password you entered is incorrect',
+  EMAIL_OR_PASSWORD_INCORRECT: 'Email or password is incorrect',
+  ACCESS_TOKEN_REQUIRED: 'Access token is required',
+  TOKEN_VERIFICATION_FAILED: 'Refresh token verification failed',
+  REFRESH_TOKEN_REQUIRED: 'Refresh token is required',
+  REFRESH_STRING_REQUIRED: 'Refresh string is required'
 } as const

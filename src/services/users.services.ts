@@ -7,7 +7,9 @@ import { TokenType } from '~/constants/enum'
 import mongoose from 'mongoose'
 import RefreshTokenModel from '~/models/refreshToken.model'
 import { ObjectId } from 'mongodb'
+import { config } from 'dotenv'
 
+config()
 export const UserService = {
   async login(user_id: string) {
     const [accessToken, refreshToken] = await UserService.signAccessTokenAndrefreshToken(user_id)
