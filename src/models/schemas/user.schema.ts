@@ -1,10 +1,11 @@
 import { Schema, ObjectId } from 'mongoose'
-import { UserVeryfyStatus } from '~/constants/enum'
+import { gender, UserVeryfyStatus } from '~/constants/enum'
 
 export interface User {
   _id?: ObjectId
-  name: string
+  full_name: string
   email: string
+  phone: string
   date_of_birth: Date
   password: string
   created_at: Date
@@ -12,18 +13,16 @@ export interface User {
   email_verify_token: string
   forgot_password_token: string
   verify: UserVeryfyStatus
-  bio: string
-  location: string
-  website: string
-  username: string
+  address: string
   avatar: string
-  cover_photo: string
+  gender: gender
 }
 
 export const userSchema = new Schema<User>(
   {
-    name: { type: String, default: '' },
+    full_name: { type: String, default: '' },
     email: { type: String, required: true, unique: true },
+    phone: { type: String, required: true },
     date_of_birth: { type: Date, default: Date.now },
     password: { type: String, required: true },
     created_at: { type: Date, default: Date.now },
@@ -31,12 +30,9 @@ export const userSchema = new Schema<User>(
     email_verify_token: { type: String, default: '' },
     forgot_password_token: { type: String, default: '' },
     verify: { type: Number, enum: UserVeryfyStatus, default: UserVeryfyStatus.Unverified },
-    bio: { type: String, default: '' },
-    location: { type: String, default: '' },
-    website: { type: String, default: '' },
-    username: { type: String, default: '' },
-    avatar: { type: String, default: '' },
-    cover_photo: { type: String, default: '' }
+    address: { type: String, default: '' },
+    gender: { type: Number, enum: gender },
+    avatar: { type: String, default: '' }
   },
   { timestamps: true }
 )

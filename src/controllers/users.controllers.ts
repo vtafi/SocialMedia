@@ -1,32 +1,31 @@
-import { Request, Response } from 'express'
+import { NextFunction, Request, Response } from 'express'
 import User from '~/models/users.model'
 import { ParamsDictionary } from 'express-serve-static-core'
 import { UserService } from '~/services/users.services'
 import { RegisterRequestBody } from '~/models/requests/users.requests'
+import { ObjectId } from 'mongoose'
 
-export const loginController = (req: Request, res: Response) => {
-  if (req.body.email !== 'user@example.com' || req.body.password !== 'password') {
-    return res.status(401).json({ message: 'Invalid email or password' })
-  }
+export const loginController = async (req: Request, res: Response) => {
+  const { user }: any = req
 
-  return res.json({ message: 'User logged in' })
+  const user_id = user._id
+
+  const result = await UserService.login(user_id)
+
+  return res.json({ message: 'Login successful', result })
 }
 
-export const registerController = async (req: Request<ParamsDictionary, any, RegisterRequestBody>, res: Response) => {
-  try {
-    const existedEmail = await UserService.findByEmail(req.body.email)
-    if (existedEmail) {
-      return res.status(400).json({ message: 'Email already in use' })
-    }
-    const newUser = await UserService.register(req.body)
-    return res.status(201).json({ message: 'User registered successfully', user: newUser })
-  } catch (error) {
-    console.error('Registration error:', error)
-    return res.status(500).json({
-      message: 'Error registering user',
-      error: error instanceof Error ? error.message : error
-    })
+export const registerController = async (
+  req: Request<ParamsDictionary, any, RegisterRequestBody>,
+  res: Response,
+  next: NextFunction
+) => {
+  const existedEmail = await UserService.findByEmail(req.body.email)
+  if (existedEmail) {
+    return res.status(400).json({ message: 'Email already in use' })
   }
+  const newUser = await UserService.register(req.body)
+  return res.status(201).json({ message: 'User registered successfully', newUser })
 }
 
 export const searchByEmailController = async (req: Request, res: Response) => {

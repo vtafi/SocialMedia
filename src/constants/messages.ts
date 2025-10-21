@@ -1,0 +1,21 @@
+export const userMessages = {
+  EMAIL_IN_USE: 'Email is already in use',
+  INVALID_CREDENTIALS: 'Invalid email or password',
+  USER_NOT_FOUND: 'User not found',
+  USER_UPDATED_SUCCESSFULLY: 'User updated successfully',
+  REGISTRATION_SUCCESSFUL: 'Registration successful',
+  LOGIN_SUCCESSFUL: 'Login successful',
+  VALIDATION_ERROR: 'Validation error',
+  PASSWORD_MISMATCH: 'Passwords do not match',
+  PASSWORD_LIMIT: 'Password must be at least 6 characters long and at most 100 characters long',
+  DATE_OF_BIRTH_INVALID: 'Date of birth must be a valid date',
+  DATE_OF_BIRTH_REQUIRED: 'Date of birth is required',
+  NAME_LIMIT: 'Name must be at least 3 characters long and at most 50 characters long',
+  NAME_REQUIRED: 'Name is required',
+  GENDER_INVALID: 'Gender must be selected from the allowed values',
+  PHONE_INVALID: 'Phone number must be a valid 10-digit number starting with 0',
+  EMAIL_REQUIRED: 'Email is required',
+  PASSWORD_REQUIRED: 'Password is required',
+  EMAIL_NOT_FOUND: 'Email not found in our records',
+  PASSWORD_INCORRECT: 'The password you entered is incorrect'
+} as const
