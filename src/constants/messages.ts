@@ -22,5 +22,6 @@ export const userMessages = {
   ACCESS_TOKEN_REQUIRED: 'Access token is required',
   TOKEN_VERIFICATION_FAILED: 'Refresh token verification failed',
   REFRESH_TOKEN_REQUIRED: 'Refresh token is required',
-  REFRESH_STRING_REQUIRED: 'Refresh string is required'
+  REFRESH_STRING_REQUIRED: 'Refresh string is required',
+  LOGOUT_SUCCESSFUL: 'Logout successful'
 } as const

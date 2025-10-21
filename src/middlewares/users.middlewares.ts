@@ -9,6 +9,7 @@ import { verifyToken } from '~/utils/jwt'
 import { ErrorWithStatus } from '~/utils/errors'
 import httpStatus from '~/constants/httpStatus'
 import RefreshTokenModel from '~/models/refreshToken.model'
+import { JsonWebTokenError } from 'jsonwebtoken'
 
 export const loginValidator = validate(
   checkSchema(
@@ -128,8 +129,15 @@ export const accessTokenValidator = validate(
                 status: httpStatus.UNAUTHORIZED
               })
             }
-            const decoded_authorization = await verifyToken({ token: accessToken })
-            req.decoded_authorization = decoded_authorization
+            try {
+              const decoded_authorization = await verifyToken({ token: accessToken })
+              req.decoded_authorization = decoded_authorization
+            } catch (error) {
+              throw new ErrorWithStatus({
+                message: (error as JsonWebTokenError).message,
+                status: httpStatus.UNAUTHORIZED
+              })
+            }
             return true
           }
         }
@@ -171,13 +179,15 @@ export const refreshTokenValidator = validate(
                   status: httpStatus.UNAUTHORIZED
                 })
               }
-              req.decoded_refresh_token = decoded_refresh_token
+              ;(req as Request).decoded_refresh_token = decoded_refresh_token
               return true
             } catch (error) {
-              throw new ErrorWithStatus({
-                message: userMessages.TOKEN_VERIFICATION_FAILED,
-                status: httpStatus.UNAUTHORIZED
-              })
+              if (error instanceof JsonWebTokenError) {
+                throw new ErrorWithStatus({
+                  message: error.message,
+                  status: httpStatus.UNAUTHORIZED
+                })
+              }
             }
           }
         }

@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express'
 import User from '~/models/users.model'
 import { ParamsDictionary } from 'express-serve-static-core'
 import { UserService } from '~/services/users.services'
-import { RegisterRequestBody } from '~/models/requests/users.requests'
+import { LogoutRequestBody, RegisterRequestBody } from '~/models/requests/users.requests'
 import { ObjectId } from 'mongoose'
 
 export const loginController = async (req: Request, res: Response) => {
@@ -28,9 +28,11 @@ export const registerController = async (
   return res.status(201).json({ message: 'User registered successfully', newUser })
 }
 
-export const logoutController = async (req: Request, res: Response) => {
-  // Implement logout logic here
-  res.status(200).json({ message: 'Logout successful' })
+export const logoutController = async (req: Request<ParamsDictionary, any, LogoutRequestBody>, res: Response) => {
+  const { refresh_token } = req.body
+  const result = await UserService.logout(refresh_token)
+
+  res.status(200).json(result)
 }
 
 export const searchByEmailController = async (req: Request, res: Response) => {

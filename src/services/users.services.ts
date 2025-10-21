@@ -8,6 +8,7 @@ import mongoose from 'mongoose'
 import RefreshTokenModel from '~/models/refreshToken.model'
 import { ObjectId } from 'mongodb'
 import { config } from 'dotenv'
+import { userMessages } from '~/constants/messages'
 
 config()
 export const UserService = {
@@ -42,6 +43,13 @@ export const UserService = {
       // Tôi giả định tên đúng phải là "sign"
       this.signRefreshToken(user_id)
     ])
+  },
+  async logout(refreshToken: string) {
+    const result = await RefreshTokenModel.deleteOne({ token: refreshToken })
+    console.log('Logout result:', result)
+    return {
+      message: userMessages.LOGOUT_SUCCESSFUL
+    }
   },
 
   async register(userData: RegisterRequestBody) {
