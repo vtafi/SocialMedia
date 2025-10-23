@@ -3,7 +3,7 @@ import { User } from '~/models/schemas/user.schema'
 import { RegisterRequestBody } from '~/models/requests/users.requests'
 import { hashPassword } from '~/utils/crypto'
 import { signToken } from '~/utils/jwt'
-import { TokenType } from '~/constants/enum'
+import { TokenType, UserVeryfyStatus } from '~/constants/enum'
 import mongoose from 'mongoose'
 import RefreshTokenModel from '~/models/refreshToken.model'
 import { ObjectId } from 'mongodb'
@@ -27,13 +27,22 @@ export const UserService = {
   async signAccessToken(user_id: string) {
     return signToken({
       payload: { user_id, token_type: TokenType.AccessToken },
+      privateKey: process.env.JWT_SECRET_ACCESS_TOKEN as string,
       options: { expiresIn: process.env.EXPIRES_IN_ACCESS_TOKEN as any }
     })
   },
   async signRefreshToken(user_id: string) {
     return signToken({
       payload: { user_id, token_type: TokenType.RefreshToken },
+      privateKey: process.env.JWT_SECRET_REFRESH_TOKEN as string,
       options: { expiresIn: process.env.EXPIRES_IN_REFRESH_TOKEN as any }
+    })
+  },
+  async signEmailVerifyToken(user_id: string) {
+    return signToken({
+      payload: { user_id, token_type: TokenType.EmailVerifyToken },
+      privateKey: process.env.JWT_SECRET_EMAIL_VERIFY_TOKEN as string,
+      options: { expiresIn: process.env.EXPIRES_IN_EMAIL_VERIFY_TOKEN as any }
     })
   },
   // Giả sử hàm này bạn đã sửa tên, hoặc chắc chắn nó là đúng
@@ -53,6 +62,8 @@ export const UserService = {
   },
 
   async register(userData: RegisterRequestBody) {
+    const user_id = new mongoose.Types.ObjectId().toString()
+    const email_verify_token = await this.signEmailVerifyToken(user_id)
     const session = await mongoose.startSession()
     session.startTransaction()
 
@@ -60,10 +71,12 @@ export const UserService = {
 
     try {
       // 3. TẠO USER (trong transaction)
-      const createdUsers = await UserModel.create(
+      await UserModel.create(
         [
           {
             ...userData,
+            _id: user_id,
+            email_verify_token,
             date_of_birth: new Date(userData.date_of_birth),
             confirmPassword: undefined,
             password: hashPassword(userData.password)
@@ -72,15 +85,13 @@ export const UserService = {
         { session }
       )
 
-      newUser = createdUsers[0] // Lấy user ra
-      const user_id = newUser._id
-
-      const [accessToken, refreshToken] = await UserService.signAccessTokenAndrefreshToken(newUser._id.toString())
+      // Lấy user ra
+      const [accessToken, refreshToken] = await UserService.signAccessTokenAndrefreshToken(user_id)
       await RefreshTokenModel.create({
-        user_id: newUser._id,
+        user_id: new mongoose.Types.ObjectId(user_id),
         token: refreshToken
       })
-
+      console.log('email_verify_token', email_verify_token)
       // 5. Nếu cả hai thành công, commit transaction
       await session.commitTransaction()
       return { accessToken, refreshToken }
@@ -113,6 +124,25 @@ export const UserService = {
     } catch (error) {
       console.error('Service error details:', error)
       throw error
+    }
+  },
+
+  async verifyEmail(user_id: string) {
+    const [token] = await Promise.all([
+      this.signAccessTokenAndrefreshToken(user_id),
+      UserModel.findByIdAndUpdate(
+        user_id,
+        {
+          email_verify_token: '',
+          verify: UserVeryfyStatus.Verified
+        },
+        { $currentDate: { updated_at: true } }
+      )
+    ])
+    const [accessToken, refreshToken] = token
+    return {
+      accessToken,
+      refreshToken
     }
   }
 }

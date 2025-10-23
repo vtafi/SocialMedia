@@ -4,10 +4,12 @@ import {
   registerController,
   searchByEmailController,
   updateUserController,
-  logoutController
+  logoutController,
+  verifyEmailValidator
 } from '~/controllers/users.controllers'
 import {
   accessTokenValidator,
+  emailVerifyTokenValidator,
   loginValidator,
   refreshTokenValidator,
   registerValidator
@@ -40,6 +42,14 @@ usersRouter.post('/register', registerValidator, wrapAsync(registerController))
   Body: { refreshToken: string }
 */
 usersRouter.post('/logout', accessTokenValidator, refreshTokenValidator, wrapAsync(logoutController))
+
+/*
+  Description: Verify email
+  Path: verify-email
+  Method: POST
+  Body: { email_verify_token: string }
+*/
+usersRouter.post('/verify-email', emailVerifyTokenValidator, wrapAsync(verifyEmailValidator))
 
 usersRouter.post('/find', searchByEmailController)
 usersRouter.put('/update/:id', updateUserController)

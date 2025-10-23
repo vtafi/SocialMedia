@@ -2,8 +2,11 @@ import { NextFunction, Request, Response } from 'express'
 import User from '~/models/users.model'
 import { ParamsDictionary } from 'express-serve-static-core'
 import { UserService } from '~/services/users.services'
-import { LogoutRequestBody, RegisterRequestBody } from '~/models/requests/users.requests'
-import { ObjectId } from 'mongoose'
+import { LogoutRequestBody, RegisterRequestBody, TokenPayload } from '~/models/requests/users.requests'
+import mongoose, { ObjectId } from 'mongoose'
+import UserModel from '~/models/users.model'
+import httpStatus from '~/constants/httpStatus'
+import { userMessages } from '~/constants/messages'
 
 export const loginController = async (req: Request, res: Response) => {
   const { user }: any = req
@@ -69,4 +72,22 @@ export const updateUserController = async (req: Request, res: Response) => {
       error: error instanceof Error ? error.message : error
     })
   }
+}
+
+export const verifyEmailValidator = async (req: Request, res: Response) => {
+  const { user_id } = req.decoded_email_verify_token as TokenPayload
+  const user = await UserModel.findOne({
+    _id: new mongoose.Types.ObjectId(user_id)
+  })
+  if (!user) {
+    return res.status(httpStatus.NOT_FOUND).json({ message: userMessages.USER_NOT_FOUND })
+  }
+  if (user.email_verify_token === '') {
+    return res.json({ message: userMessages.EMAIL_ALREADY_VERIFIED })
+  }
+  const result = await UserService.verifyEmail(user_id)
+  return res.json({
+    message: userMessages.EMAIL_VERIFIED_SUCCESSFULLY,
+    result
+  })
 }

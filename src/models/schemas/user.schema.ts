@@ -7,8 +7,7 @@ export interface User {
   email: string
   date_of_birth: Date
   password: string
-  created_at: Date
-  updated_at: Date
+
   email_verify_token: string
   forgot_password_token: string
   verify: UserVeryfyStatus
@@ -26,8 +25,7 @@ export const userSchema = new Schema<User>(
     email: { type: String, required: true, unique: true },
     date_of_birth: { type: Date, default: Date.now },
     password: { type: String, required: true },
-    created_at: { type: Date, default: Date.now },
-    updated_at: { type: Date, default: Date.now },
+
     email_verify_token: { type: String, default: '' },
     forgot_password_token: { type: String, default: '' },
     verify: { type: Number, enum: UserVeryfyStatus, default: UserVeryfyStatus.Unverified },
@@ -38,5 +36,5 @@ export const userSchema = new Schema<User>(
     avatar: { type: String, default: '' },
     cover_photo: { type: String, default: '' }
   },
-  { timestamps: true }
+  { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } }
 )

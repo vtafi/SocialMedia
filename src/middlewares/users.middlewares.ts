@@ -122,6 +122,20 @@ export const accessTokenValidator = validate(
         },
         custom: {
           options: async (value, { req }) => {
+            if (!value) {
+              throw new ErrorWithStatus({
+                message: userMessages.ACCESS_TOKEN_REQUIRED,
+                status: httpStatus.UNAUTHORIZED // 401
+              })
+            }
+
+            // Kiểm tra type
+            if (typeof value !== 'string') {
+              throw new ErrorWithStatus({
+                message: userMessages.ACCESS_TOKEN_STRING_REQUIRED,
+                status: httpStatus.UNAUTHORIZED // 401
+              })
+            }
             const accessToken = value.split(' ')[1]
             if (!accessToken) {
               throw new ErrorWithStatus({
@@ -130,7 +144,10 @@ export const accessTokenValidator = validate(
               })
             }
             try {
-              const decoded_authorization = await verifyToken({ token: accessToken })
+              const decoded_authorization = await verifyToken({
+                token: accessToken,
+                publicKey: process.env.JWT_SECRET_ACCESS_TOKEN as string
+              })
               req.decoded_authorization = decoded_authorization
             } catch (error) {
               throw new ErrorWithStatus({
@@ -170,7 +187,7 @@ export const refreshTokenValidator = validate(
             }
             try {
               const [decoded_refresh_token, refreshToken] = await Promise.all([
-                verifyToken({ token: value }),
+                verifyToken({ token: value, publicKey: process.env.JWT_SECRET_REFRESH_TOKEN as string }),
                 RefreshTokenModel.findOne({ token: value })
               ])
               if (refreshToken === null) {
@@ -188,6 +205,53 @@ export const refreshTokenValidator = validate(
                   status: httpStatus.UNAUTHORIZED
                 })
               }
+              // Throw lại các error khác (như ErrorWithStatus)
+              throw new ErrorWithStatus({
+                message: userMessages.TOKEN_INVALID_OR_EXPIRED,
+                status: httpStatus.UNAUTHORIZED
+              })
+            }
+          }
+        }
+      }
+    },
+    ['body']
+  )
+)
+
+export const emailVerifyTokenValidator = validate(
+  checkSchema(
+    {
+      email_verify_token: {
+        custom: {
+          options: async (value, { req }) => {
+            // Kiểm tra empty ngay trong custom
+            if (!value) {
+              throw new ErrorWithStatus({
+                message: userMessages.EMAIL_VERIFY_TOKEN_REQUIRED,
+                status: httpStatus.UNAUTHORIZED // 401
+              })
+            }
+
+            // Kiểm tra type
+            if (typeof value !== 'string') {
+              throw new ErrorWithStatus({
+                message: userMessages.EMAIL_VERIFY_TOKEN_STRING_REQUIRED,
+                status: httpStatus.UNAUTHORIZED // 401
+              })
+            }
+            try {
+              const decoded_email_verify_token = await verifyToken({
+                token: value,
+                publicKey: process.env.JWT_SECRET_EMAIL_VERIFY_TOKEN as string
+              })
+              ;(req as Request).decoded_email_verify_token = decoded_email_verify_token
+              return true
+            } catch (error) {
+              throw new ErrorWithStatus({
+                message: (error as JsonWebTokenError).message,
+                status: httpStatus.UNAUTHORIZED
+              })
             }
           }
         }
