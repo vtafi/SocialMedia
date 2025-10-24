@@ -2,13 +2,20 @@ import { NextFunction, Request, Response } from 'express'
 import User from '~/models/users.model'
 import { ParamsDictionary } from 'express-serve-static-core'
 import { UserService } from '~/services/users.services'
-import { LogoutRequestBody, RegisterRequestBody, TokenPayload } from '~/models/requests/users.requests'
+import {
+  LoginRequestBody,
+  LogoutRequestBody,
+  RegisterRequestBody,
+  TokenPayload,
+  VerifyEmailRequestBody
+} from '~/models/requests/users.requests'
 import mongoose, { ObjectId } from 'mongoose'
 import UserModel from '~/models/users.model'
 import httpStatus from '~/constants/httpStatus'
 import { userMessages } from '~/constants/messages'
+import { UserVeryfyStatus } from '~/constants/enum'
 
-export const loginController = async (req: Request, res: Response) => {
+export const loginController = async (req: Request<ParamsDictionary, any, LoginRequestBody>, res: Response) => {
   const { user }: any = req
 
   const user_id = user._id
@@ -74,7 +81,10 @@ export const updateUserController = async (req: Request, res: Response) => {
   }
 }
 
-export const verifyEmailValidator = async (req: Request, res: Response) => {
+export const verifyEmailController = async (
+  req: Request<ParamsDictionary, any, VerifyEmailRequestBody>,
+  res: Response
+) => {
   const { user_id } = req.decoded_email_verify_token as TokenPayload
   const user = await UserModel.findOne({
     _id: new mongoose.Types.ObjectId(user_id)
@@ -90,4 +100,17 @@ export const verifyEmailValidator = async (req: Request, res: Response) => {
     message: userMessages.EMAIL_VERIFIED_SUCCESSFULLY,
     result
   })
+}
+
+export const resendVerifyEmailController = async (req: Request, res: Response, next: NextFunction) => {
+  const { user_id } = req.decoded_authorization as TokenPayload
+  const user = await UserModel.findOne({ _id: new mongoose.Types.ObjectId(user_id) })
+  if (!user) {
+    return res.status(httpStatus.NOT_FOUND).json({ message: userMessages.USER_NOT_FOUND })
+  }
+  if (user.verify === UserVeryfyStatus.Verified) {
+    return res.json({ message: userMessages.EMAIL_ALREADY_VERIFIED })
+  }
+  const result = await UserService.resendVerifyEmail(user_id)
+  return res.json(result)
 }

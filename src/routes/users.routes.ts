@@ -5,7 +5,8 @@ import {
   searchByEmailController,
   updateUserController,
   logoutController,
-  verifyEmailValidator
+  verifyEmailController,
+  resendVerifyEmailController
 } from '~/controllers/users.controllers'
 import {
   accessTokenValidator,
@@ -49,7 +50,16 @@ usersRouter.post('/logout', accessTokenValidator, refreshTokenValidator, wrapAsy
   Method: POST
   Body: { email_verify_token: string }
 */
-usersRouter.post('/verify-email', emailVerifyTokenValidator, wrapAsync(verifyEmailValidator))
+usersRouter.post('/verify-email', emailVerifyTokenValidator, wrapAsync(verifyEmailController))
+
+/*
+  Description: Resend verify email
+  Path: resend-verify-email
+  Method: POST
+  Headers: { Authorization: 'Bearer <access_token>' }
+  Body: {  }
+*/
+usersRouter.post('/resend-verify-email', accessTokenValidator, wrapAsync(resendVerifyEmailController))
 
 usersRouter.post('/find', searchByEmailController)
 usersRouter.put('/update/:id', updateUserController)

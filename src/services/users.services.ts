@@ -144,5 +144,13 @@ export const UserService = {
       accessToken,
       refreshToken
     }
+  },
+  async resendVerifyEmail(user_id: string) {
+    const email_verify_token = await this.signEmailVerifyToken(user_id)
+    console.log('email_verify_token', email_verify_token)
+    await UserModel.findByIdAndUpdate(user_id, { email_verify_token }, { $currentDate: { updated_at: true } })
+    return {
+      message: userMessages.RESEND_EMAIL_VERIFIED_SUCCESSFULLY
+    }
   }
 }
