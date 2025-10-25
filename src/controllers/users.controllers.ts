@@ -3,11 +3,14 @@ import User from '~/models/users.model'
 import { ParamsDictionary } from 'express-serve-static-core'
 import { UserService } from '~/services/users.services'
 import {
+  ForgotPasswordRequestBody,
   LoginRequestBody,
   LogoutRequestBody,
   RegisterRequestBody,
+  ResetPasswordRequestBody,
   TokenPayload,
-  VerifyEmailRequestBody
+  VerifyEmailRequestBody,
+  VerifyForgotPasswordRequestBody
 } from '~/models/requests/users.requests'
 import mongoose, { ObjectId } from 'mongoose'
 import UserModel from '~/models/users.model'
@@ -112,5 +115,35 @@ export const resendVerifyEmailController = async (req: Request, res: Response, n
     return res.json({ message: userMessages.EMAIL_ALREADY_VERIFIED })
   }
   const result = await UserService.resendVerifyEmail(user_id)
+  return res.json(result)
+}
+
+export const forgotPasswordController = async (
+  req: Request<ParamsDictionary, any, ForgotPasswordRequestBody>,
+  res: Response
+) => {
+  const { _id } = req.user!
+  if (!_id) {
+    return res.status(401).json({ message: userMessages.USER_NOT_FOUND })
+  }
+  const user_id = _id.toString()
+  const result = await UserService.forgotPassword(user_id)
+  return res.json(result)
+}
+
+export const verifyForgotPasswordController = async (
+  req: Request<ParamsDictionary, any, VerifyForgotPasswordRequestBody>,
+  res: Response
+) => {
+  return res.json({ message: userMessages.FORGOT_PASSWORD_TOKEN_VERIFIED_SUCCESSFULLY })
+}
+
+export const resetPasswordController = async (
+  req: Request<ParamsDictionary, any, ResetPasswordRequestBody>,
+  res: Response
+) => {
+  const { user_id } = req.decoded_forgot_password_token as TokenPayload
+  const { password } = req.body
+  const result = await UserService.resetPassword(user_id, password)
   return res.json(result)
 }

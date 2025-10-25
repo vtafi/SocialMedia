@@ -6,14 +6,20 @@ import {
   updateUserController,
   logoutController,
   verifyEmailController,
-  resendVerifyEmailController
+  resendVerifyEmailController,
+  forgotPasswordController,
+  verifyForgotPasswordController,
+  resetPasswordController
 } from '~/controllers/users.controllers'
 import {
   accessTokenValidator,
   emailVerifyTokenValidator,
+  forgotPasswordValidator,
   loginValidator,
   refreshTokenValidator,
-  registerValidator
+  registerValidator,
+  resetPasswordValidator,
+  verifyForgotPasswordTokenValidator
 } from '~/middlewares/users.middlewares'
 import { wrapAsync } from '~/utils/handlers'
 
@@ -60,6 +66,34 @@ usersRouter.post('/verify-email', emailVerifyTokenValidator, wrapAsync(verifyEma
   Body: {  }
 */
 usersRouter.post('/resend-verify-email', accessTokenValidator, wrapAsync(resendVerifyEmailController))
+
+/*
+  Description: submit email forgot password
+  Path: forgot-password
+  Method: POST
+  Body: { email: string }
+*/
+usersRouter.post('/forgot-password', forgotPasswordValidator, wrapAsync(forgotPasswordController))
+
+/*
+  Description: verify link in email to reset password
+  Path: verify-forgot-password
+  Method: POST
+  Body: { forgot_password_token: string }
+*/
+usersRouter.post(
+  '/verify-forgot-password',
+  verifyForgotPasswordTokenValidator,
+  wrapAsync(verifyForgotPasswordController)
+)
+
+/*
+  Description: reset password
+  Path: reset-password
+  Method: POST
+  Body: { forgot_password_token: string, new_password: string, confirm_new_password: string }
+*/
+usersRouter.post('/reset-password', resetPasswordValidator, wrapAsync(resetPasswordController))
 
 usersRouter.post('/find', searchByEmailController)
 usersRouter.put('/update/:id', updateUserController)

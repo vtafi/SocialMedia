@@ -45,7 +45,13 @@ export const UserService = {
       options: { expiresIn: process.env.EXPIRES_IN_EMAIL_VERIFY_TOKEN as any }
     })
   },
-  // Giả sử hàm này bạn đã sửa tên, hoặc chắc chắn nó là đúng
+  async signForgotPasswordToken(user_id: string) {
+    return signToken({
+      payload: { user_id, token_type: TokenType.ForgotPasswordToken },
+      privateKey: process.env.JWT_SECRET_FORGOT_PASSWORD_TOKEN as string,
+      options: { expiresIn: process.env.EXPIRES_IN_FORGOT_PASSWORD_TOKEN as any }
+    })
+  },
   async signAccessTokenAndrefreshToken(user_id: string) {
     return Promise.all([
       this.signAccessToken(user_id),
@@ -151,6 +157,24 @@ export const UserService = {
     await UserModel.findByIdAndUpdate(user_id, { email_verify_token }, { $currentDate: { updated_at: true } })
     return {
       message: userMessages.RESEND_EMAIL_VERIFIED_SUCCESSFULLY
+    }
+  },
+  async forgotPassword(user_id: string) {
+    const forgot_password_token = await this.signForgotPasswordToken(user_id)
+    await UserModel.findByIdAndUpdate(user_id, { forgot_password_token }, { $currentDate: { updated_at: true } })
+    console.log('forgot_password_token', forgot_password_token)
+    return {
+      message: userMessages.FORGOT_PASSWORD_EMAIL_SENT_SUCCESSFULLY
+    }
+  },
+  async resetPassword(user_id: string, newPassword: string) {
+    await UserModel.findByIdAndUpdate(
+      user_id,
+      { password: hashPassword(newPassword), forgot_password_token: '' },
+      { $currentDate: { updated_at: true } }
+    )
+    return {
+      message: userMessages.RESET_PASSWORD_SUCCESSFULLY
     }
   }
 }
