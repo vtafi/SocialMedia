@@ -17,6 +17,8 @@ import UserModel from '~/models/users.model'
 import httpStatus from '~/constants/httpStatus'
 import { userMessages } from '~/constants/messages'
 import { UserVeryfyStatus } from '~/constants/enum'
+import { config } from 'dotenv'
+config()
 
 export const loginController = async (req: Request<ParamsDictionary, any, LoginRequestBody>, res: Response) => {
   const { user }: any = req
@@ -146,4 +148,12 @@ export const resetPasswordController = async (
   const { password } = req.body
   const result = await UserService.resetPassword(user_id, password)
   return res.json(result)
+}
+
+export const oauthGoogleController = async (req: Request, res: Response) => {
+  console.log(req.url)
+  const { code } = req.query
+  const { accessToken, refreshToken, newUser } = await UserService.oauthGoogle(code as string)
+  const urlRedirect = `${process.env.CLIENT_URL}?access_token=${accessToken}&refresh_token=${refreshToken}&newUser=${newUser}`
+  return res.redirect(urlRedirect)
 }

@@ -9,6 +9,9 @@ import RefreshTokenModel from '~/models/refreshToken.model'
 import { ObjectId } from 'mongodb'
 import { config } from 'dotenv'
 import { userMessages } from '~/constants/messages'
+import axios from 'axios'
+import { ErrorWithStatus } from '~/utils/errors'
+import httpStatus from '~/constants/httpStatus'
 
 config()
 export const UserService = {
@@ -23,7 +26,70 @@ export const UserService = {
 
     return { accessToken, refreshToken }
   },
-
+  async oauthGoogle(code: string) {
+    const { access_token, id_token } = await this.getOauthGoogleToken(code)
+    const userInfo = await this.getGoogleUserInfo(access_token, id_token)
+    if (!userInfo.verified_email) {
+      throw new ErrorWithStatus({
+        message: userMessages.EMAIL_NOT_VERIFIED,
+        status: httpStatus.BAD_REQUEST
+      })
+    }
+    const user = await UserModel.findOne({ email: userInfo.email })
+    if (user) {
+      const [accessToken, refreshToken] = await UserService.signAccessTokenAndrefreshToken(user._id.toString())
+      await RefreshTokenModel.create({
+        user_id: user._id,
+        token: refreshToken
+      })
+      return { accessToken, refreshToken, newUser: false }
+    } else {
+      const user_id = new mongoose.Types.ObjectId().toString()
+      await UserModel.create({
+        _id: user_id,
+        email: userInfo.email,
+        name: userInfo.name,
+        avatar: userInfo.picture,
+        email_verify_token: '',
+        date_of_birth: null,
+        password: null,
+        verify: UserVeryfyStatus.Verified
+      })
+      const [accessToken, refreshToken] = await UserService.signAccessTokenAndrefreshToken(user_id)
+      await RefreshTokenModel.create({
+        user_id: new mongoose.Types.ObjectId(user_id),
+        token: refreshToken
+      })
+      return { accessToken, refreshToken, newUser: true }
+    }
+  },
+  async getOauthGoogleToken(code: string) {
+    const body = {
+      code,
+      client_id: process.env.GOOGLE_CLIENT_ID,
+      client_secret: process.env.GOOGLE_CLIENT_SECRET,
+      redirect_uri: process.env.GOOGLE_REDIRECT_URI,
+      grant_type: 'authorization_code'
+    }
+    const { data } = await axios.post('https://oauth2.googleapis.com/token', body, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    })
+    return data as { access_token: string; id_token: string }
+  },
+  async getGoogleUserInfo(access_token: string, id_token: string) {
+    const { data } = await axios.get('https://www.googleapis.com/oauth2/v1/userinfo', {
+      params: {
+        access_token,
+        alt: 'json'
+      },
+      headers: {
+        Authorization: `Bearer ${id_token}`
+      }
+    })
+    return data as { email: string; verified_email: boolean; id: string; name: string; picture: string; locale: string }
+  },
   async signAccessToken(user_id: string) {
     return signToken({
       payload: { user_id, token_type: TokenType.AccessToken },
@@ -66,7 +132,6 @@ export const UserService = {
       message: userMessages.LOGOUT_SUCCESSFUL
     }
   },
-
   async register(userData: RegisterRequestBody) {
     const user_id = new mongoose.Types.ObjectId().toString()
     const email_verify_token = await this.signEmailVerifyToken(user_id)
@@ -112,7 +177,6 @@ export const UserService = {
       session.endSession()
     }
   },
-
   async findByEmail(email: string) {
     try {
       const user = await UserModel.findOne({ email })
@@ -122,7 +186,6 @@ export const UserService = {
       throw error
     }
   },
-
   async updateUser(userId: string, updateData: Partial<User>) {
     try {
       const updatedUser = await UserModel.findByIdAndUpdate(userId, updateData, { new: true })
@@ -132,7 +195,6 @@ export const UserService = {
       throw error
     }
   },
-
   async verifyEmail(user_id: string) {
     const [token] = await Promise.all([
       this.signAccessTokenAndrefreshToken(user_id),

@@ -9,7 +9,8 @@ import {
   resendVerifyEmailController,
   forgotPasswordController,
   verifyForgotPasswordController,
-  resetPasswordController
+  resetPasswordController,
+  oauthGoogleController
 } from '~/controllers/users.controllers'
 import {
   accessTokenValidator,
@@ -32,6 +33,13 @@ const usersRouter = Router()
   Body: { email: string, password: string }
 */
 usersRouter.post('/login', loginValidator, wrapAsync(loginController))
+
+/*
+  Description: OAuth Google
+  Path: /users/oauth/google
+  Method: GET
+*/
+usersRouter.get('/oauth/google', wrapAsync(oauthGoogleController))
 
 /*
   Description: Register a new user

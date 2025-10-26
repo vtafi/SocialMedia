@@ -38,5 +38,7 @@ export const userMessages = {
   FORGOT_PASSWORD_TOKEN_STRING_REQUIRED: 'Forgot password token must be a string',
   FORGOT_PASSWORD_TOKEN_VERIFIED_SUCCESSFULLY: 'Forgot password token verified successfully',
   FORGOT_PASSWORD_TOKEN_INVALID: 'Forgot password token is invalid',
-  RESET_PASSWORD_SUCCESSFULLY: 'Reset password successfully'
+  RESET_PASSWORD_SUCCESSFULLY: 'Reset password successfully',
+  EMAIL_NOT_VERIFIED: 'Email not verified, please verify your email first',
+  REGISTER_SUCCESSFUL: 'Register successful'
 } as const

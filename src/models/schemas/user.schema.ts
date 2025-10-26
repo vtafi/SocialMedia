@@ -5,9 +5,8 @@ export interface User {
   _id?: ObjectId
   name: string
   email: string
-  date_of_birth: Date
-  password: string
-
+  date_of_birth: Date | null
+  password: string | null
   email_verify_token: string
   forgot_password_token: string
   verify: UserVeryfyStatus
@@ -23,8 +22,8 @@ export const userSchema = new Schema<User>(
   {
     name: { type: String, default: '' },
     email: { type: String, required: true, unique: true },
-    date_of_birth: { type: Date, default: Date.now },
-    password: { type: String, required: true },
+    date_of_birth: { type: Date, default: null },
+    password: { type: String, default: null },
 
     email_verify_token: { type: String, default: '' },
     forgot_password_token: { type: String, default: '' },
