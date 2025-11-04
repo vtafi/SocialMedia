@@ -10,7 +10,10 @@ import {
   forgotPasswordController,
   verifyForgotPasswordController,
   resetPasswordController,
-  oauthGoogleController
+  oauthGoogleController,
+  refreshTokenController,
+  getMeController,
+  updateMeController
 } from '~/controllers/users.controllers'
 import {
   accessTokenValidator,
@@ -20,7 +23,8 @@ import {
   refreshTokenValidator,
   registerValidator,
   resetPasswordValidator,
-  verifyForgotPasswordTokenValidator
+  verifyForgotPasswordTokenValidator,
+  verifyUserValidator
 } from '~/middlewares/users.middlewares'
 import { wrapAsync } from '~/utils/handlers'
 
@@ -102,6 +106,30 @@ usersRouter.post(
   Body: { forgot_password_token: string, new_password: string, confirm_new_password: string }
 */
 usersRouter.post('/reset-password', resetPasswordValidator, wrapAsync(resetPasswordController))
+
+/*
+  Description: Refresh Access Token
+  Path: /users/refresh-token
+  Method: POST
+  Body: { refresh_token: string }
+*/
+usersRouter.post('/refresh-token', accessTokenValidator, wrapAsync(refreshTokenController))
+
+/*
+  Description: Get user profile
+  Path: /users/me
+  Method: GET
+  Headers: { Authorization: 'Bearer <access_token>' }
+*/
+usersRouter.get('/me', accessTokenValidator, wrapAsync(getMeController))
+
+/*
+  Description: Update user profile
+  Path: /users/me
+  Method: PATCH
+  Headers: { Authorization: 'Bearer <access_token>' }
+*/
+usersRouter.patch('/me', accessTokenValidator, verifyUserValidator, wrapAsync(updateMeController))
 
 usersRouter.post('/find', searchByEmailController)
 usersRouter.put('/update/:id', updateUserController)

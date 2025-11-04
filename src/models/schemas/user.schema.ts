@@ -1,5 +1,5 @@
 import { Schema, ObjectId } from 'mongoose'
-import { UserVeryfyStatus } from '~/constants/enum'
+import { UserVerifyStatus } from '~/constants/enum'
 
 export interface User {
   _id?: ObjectId
@@ -9,7 +9,7 @@ export interface User {
   password: string | null
   email_verify_token: string
   forgot_password_token: string
-  verify: UserVeryfyStatus
+  verify: UserVerifyStatus
   bio: string
   location: string
   website: string
@@ -27,7 +27,7 @@ export const userSchema = new Schema<User>(
 
     email_verify_token: { type: String, default: '' },
     forgot_password_token: { type: String, default: '' },
-    verify: { type: Number, enum: UserVeryfyStatus, default: UserVeryfyStatus.Unverified },
+    verify: { type: Number, enum: UserVerifyStatus, default: UserVerifyStatus.Unverified },
     bio: { type: String, default: '' },
     location: { type: String, default: '' },
     website: { type: String, default: '' },

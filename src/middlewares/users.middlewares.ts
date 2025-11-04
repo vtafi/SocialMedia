@@ -10,6 +10,8 @@ import { ErrorWithStatus } from '~/utils/errors'
 import httpStatus from '~/constants/httpStatus'
 import RefreshTokenModel from '~/models/refreshToken.model'
 import { JsonWebTokenError } from 'jsonwebtoken'
+import { UserVerifyStatus } from '~/constants/enum'
+import { TokenPayload } from '~/models/requests/users.requests'
 
 const passwordSchema: ParamSchema = {
   notEmpty: true,
@@ -196,6 +198,7 @@ export const accessTokenValidator = validate(
               })
             }
             const accessToken = value.split(' ')[1]
+
             if (!accessToken) {
               throw new ErrorWithStatus({
                 message: userMessages.ACCESS_TOKEN_REQUIRED,
@@ -365,3 +368,17 @@ export const resetPasswordValidator = validate(
     ['body']
   )
 )
+
+export const verifyUserValidator = (req: Request, res: Response, next: NextFunction) => {
+  const { verify } = req.decoded_authorization as TokenPayload
+
+  if (verify !== UserVerifyStatus.Verified) {
+    return next(
+      new ErrorWithStatus({
+        message: userMessages.EMAIL_NOT_VERIFIED,
+        status: httpStatus.FORBIDDEN
+      })
+    )
+  }
+  next()
+}

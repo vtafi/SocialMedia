@@ -4,14 +4,38 @@ import { ObjectId, Schema, model } from 'mongoose'
 export interface RefreshToken {
   _id?: ObjectId
   token: string
+  expiresAt?: Date // 👈 CẦN CÓ để kiểm tra hết hạn
+  isRevoked?: boolean
   createdAt?: Date
   user_id: ObjectId
 }
 
 // Schema đã bỏ trường _id thừa
-export const refreshTokenSchema = new Schema<RefreshToken>({
-  // Mongoose tự động xử lý _id
-  token: { type: String, required: true, unique: true },
-  user_id: { type: Schema.Types.ObjectId, ref: 'Users', required: true },
-  createdAt: { type: Date, default: Date.now, expires: '7d' }
-})
+export const refreshTokenSchema = new Schema<RefreshToken>(
+  {
+    user_id: {
+      type: Schema.Types.ObjectId,
+      required: true,
+      ref: 'User',
+      index: true
+    },
+    token: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true
+    },
+    expiresAt: {
+      type: Date,
+      index: true // Để dễ query token hết hạn
+    },
+    isRevoked: {
+      type: Boolean,
+      default: false
+    }
+  },
+  {
+    timestamps: true,
+    collection: 'refresh_tokens'
+  }
+)

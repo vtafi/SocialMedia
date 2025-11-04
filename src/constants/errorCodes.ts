@@ -1,0 +1,8 @@
+export const ErrorCode = {
+  AUTH__JWT_INVALID: 'AUTH__JWT_INVALID',
+  AUTH__JWT_EXPIRED: 'AUTH__JWT_EXPIRED',
+  AUTH__TOKEN_MISSING: 'AUTH__TOKEN_MISSING',
+  USER__NOT_FOUND: 'USER__NOT_FOUND',
+  USER__EMAIL_IN_USE: 'USER__EMAIL_IN_USE'
+  // ... mở rộng theo domain
+} as const

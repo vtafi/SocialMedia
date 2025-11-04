@@ -2,8 +2,8 @@ import UserModel from '~/models/users.model'
 import { User } from '~/models/schemas/user.schema'
 import { RegisterRequestBody } from '~/models/requests/users.requests'
 import { hashPassword } from '~/utils/crypto'
-import { signToken } from '~/utils/jwt'
-import { TokenType, UserVeryfyStatus } from '~/constants/enum'
+import { signToken, verifyToken } from '~/utils/jwt'
+import { TokenType, UserVerifyStatus } from '~/constants/enum'
 import mongoose from 'mongoose'
 import RefreshTokenModel from '~/models/refreshToken.model'
 import { ObjectId } from 'mongodb'
@@ -12,11 +12,15 @@ import { userMessages } from '~/constants/messages'
 import axios from 'axios'
 import { ErrorWithStatus } from '~/utils/errors'
 import httpStatus from '~/constants/httpStatus'
+import jwt from 'jsonwebtoken'
 
 config()
 export const UserService = {
-  async login(user_id: string) {
-    const [accessToken, refreshToken] = await UserService.signAccessTokenAndrefreshToken(user_id)
+  async login({ user_id, verify }: { user_id: string; verify: UserVerifyStatus }) {
+    const [accessToken, refreshToken] = await UserService.signAccessTokenAndrefreshToken({
+      user_id,
+      verify
+    })
     await RefreshTokenModel.deleteMany({ user_id: new ObjectId(user_id) })
 
     await RefreshTokenModel.create({
@@ -37,7 +41,11 @@ export const UserService = {
     }
     const user = await UserModel.findOne({ email: userInfo.email })
     if (user) {
-      const [accessToken, refreshToken] = await UserService.signAccessTokenAndrefreshToken(user._id.toString())
+      const [accessToken, refreshToken] = await UserService.signAccessTokenAndrefreshToken({
+        user_id: user._id.toString(),
+        verify: UserVerifyStatus.Verified
+      })
+      await RefreshTokenModel.deleteMany({ user_id: user._id })
       await RefreshTokenModel.create({
         user_id: user._id,
         token: refreshToken
@@ -53,9 +61,12 @@ export const UserService = {
         email_verify_token: '',
         date_of_birth: null,
         password: null,
-        verify: UserVeryfyStatus.Verified
+        verify: UserVerifyStatus.Verified
       })
-      const [accessToken, refreshToken] = await UserService.signAccessTokenAndrefreshToken(user_id)
+      const [accessToken, refreshToken] = await UserService.signAccessTokenAndrefreshToken({
+        user_id,
+        verify: UserVerifyStatus.Unverified
+      })
       await RefreshTokenModel.create({
         user_id: new mongoose.Types.ObjectId(user_id),
         token: refreshToken
@@ -90,39 +101,39 @@ export const UserService = {
     })
     return data as { email: string; verified_email: boolean; id: string; name: string; picture: string; locale: string }
   },
-  async signAccessToken(user_id: string) {
+  async signAccessToken({ user_id, verify }: { user_id: string; verify: UserVerifyStatus }) {
     return signToken({
-      payload: { user_id, token_type: TokenType.AccessToken },
+      payload: { user_id, verify, token_type: TokenType.AccessToken },
       privateKey: process.env.JWT_SECRET_ACCESS_TOKEN as string,
       options: { expiresIn: process.env.EXPIRES_IN_ACCESS_TOKEN as any }
     })
   },
-  async signRefreshToken(user_id: string) {
+  async signRefreshToken({ user_id, verify }: { user_id: string; verify: UserVerifyStatus }) {
     return signToken({
-      payload: { user_id, token_type: TokenType.RefreshToken },
+      payload: { user_id, verify, token_type: TokenType.RefreshToken },
       privateKey: process.env.JWT_SECRET_REFRESH_TOKEN as string,
       options: { expiresIn: process.env.EXPIRES_IN_REFRESH_TOKEN as any }
     })
   },
-  async signEmailVerifyToken(user_id: string) {
+  async signEmailVerifyToken({ user_id, verify }: { user_id: string; verify: UserVerifyStatus }) {
     return signToken({
-      payload: { user_id, token_type: TokenType.EmailVerifyToken },
+      payload: { user_id, verify, token_type: TokenType.EmailVerifyToken },
       privateKey: process.env.JWT_SECRET_EMAIL_VERIFY_TOKEN as string,
       options: { expiresIn: process.env.EXPIRES_IN_EMAIL_VERIFY_TOKEN as any }
     })
   },
-  async signForgotPasswordToken(user_id: string) {
+  async signForgotPasswordToken({ user_id, verify }: { user_id: string; verify: UserVerifyStatus }) {
     return signToken({
-      payload: { user_id, token_type: TokenType.ForgotPasswordToken },
+      payload: { user_id, verify, token_type: TokenType.ForgotPasswordToken },
       privateKey: process.env.JWT_SECRET_FORGOT_PASSWORD_TOKEN as string,
       options: { expiresIn: process.env.EXPIRES_IN_FORGOT_PASSWORD_TOKEN as any }
     })
   },
-  async signAccessTokenAndrefreshToken(user_id: string) {
+  async signAccessTokenAndrefreshToken({ user_id, verify }: { user_id: string; verify: UserVerifyStatus }) {
     return Promise.all([
-      this.signAccessToken(user_id),
+      this.signAccessToken({ user_id, verify }),
       // Tôi giả định tên đúng phải là "sign"
-      this.signRefreshToken(user_id)
+      this.signRefreshToken({ user_id, verify })
     ])
   },
   async logout(refreshToken: string) {
@@ -134,7 +145,7 @@ export const UserService = {
   },
   async register(userData: RegisterRequestBody) {
     const user_id = new mongoose.Types.ObjectId().toString()
-    const email_verify_token = await this.signEmailVerifyToken(user_id)
+    const email_verify_token = await this.signEmailVerifyToken({ user_id, verify: UserVerifyStatus.Unverified })
     const session = await mongoose.startSession()
     session.startTransaction()
 
@@ -157,7 +168,10 @@ export const UserService = {
       )
 
       // Lấy user ra
-      const [accessToken, refreshToken] = await UserService.signAccessTokenAndrefreshToken(user_id)
+      const [accessToken, refreshToken] = await UserService.signAccessTokenAndrefreshToken({
+        user_id,
+        verify: UserVerifyStatus.Unverified
+      })
       await RefreshTokenModel.create({
         user_id: new mongoose.Types.ObjectId(user_id),
         token: refreshToken
@@ -197,12 +211,12 @@ export const UserService = {
   },
   async verifyEmail(user_id: string) {
     const [token] = await Promise.all([
-      this.signAccessTokenAndrefreshToken(user_id),
+      this.signAccessTokenAndrefreshToken({ user_id, verify: UserVerifyStatus.Verified }),
       UserModel.findByIdAndUpdate(
         user_id,
         {
           email_verify_token: '',
-          verify: UserVeryfyStatus.Verified
+          verify: UserVerifyStatus.Verified
         },
         { $currentDate: { updated_at: true } }
       )
@@ -214,15 +228,15 @@ export const UserService = {
     }
   },
   async resendVerifyEmail(user_id: string) {
-    const email_verify_token = await this.signEmailVerifyToken(user_id)
+    const email_verify_token = await this.signEmailVerifyToken({ user_id, verify: UserVerifyStatus.Unverified })
     console.log('email_verify_token', email_verify_token)
     await UserModel.findByIdAndUpdate(user_id, { email_verify_token }, { $currentDate: { updated_at: true } })
     return {
       message: userMessages.RESEND_EMAIL_VERIFIED_SUCCESSFULLY
     }
   },
-  async forgotPassword(user_id: string) {
-    const forgot_password_token = await this.signForgotPasswordToken(user_id)
+  async forgotPassword({ user_id, verify }: { user_id: string; verify: UserVerifyStatus }) {
+    const forgot_password_token = await this.signForgotPasswordToken({ user_id, verify })
     await UserModel.findByIdAndUpdate(user_id, { forgot_password_token }, { $currentDate: { updated_at: true } })
     console.log('forgot_password_token', forgot_password_token)
     return {
@@ -238,5 +252,133 @@ export const UserService = {
     return {
       message: userMessages.RESET_PASSWORD_SUCCESSFULLY
     }
+  },
+  async refreshToken(refreshToken: string) {
+    // 1️⃣ Verify refresh token signature
+    let decoded
+    try {
+      decoded = await verifyToken({
+        token: refreshToken,
+        publicKey: process.env.JWT_SECRET_REFRESH_TOKEN as string
+      })
+    } catch (error: any) {
+      // ❌ Test Case: Invalid refresh token signature
+      throw new ErrorWithStatus({
+        message: userMessages.REFRESH_TOKEN_INVALID,
+        status: httpStatus.UNAUTHORIZED
+      })
+    }
+
+    // 2️⃣ Kiểm tra token type phải là RefreshToken
+    if (decoded.token_type !== TokenType.RefreshToken) {
+      throw new ErrorWithStatus({
+        message: userMessages.REFRESH_TOKEN_INVALID,
+        status: httpStatus.UNAUTHORIZED
+      })
+    }
+
+    // 3️⃣ Tìm refresh token trong database
+    const storedToken = await RefreshTokenModel.findOne({
+      token: refreshToken,
+      user_id: new ObjectId(decoded.user_id)
+    })
+
+    // ❌ Test Case: Refresh token not in database
+    if (!storedToken) {
+      throw new ErrorWithStatus({
+        message: userMessages.REFRESH_TOKEN_NOT_FOUND,
+        status: httpStatus.UNAUTHORIZED
+      })
+    }
+
+    // 4️⃣ Kiểm tra token đã bị revoke chưa
+    if (storedToken.isRevoked) {
+      throw new ErrorWithStatus({
+        message: userMessages.REFRESH_TOKEN_REVOKED,
+        status: httpStatus.UNAUTHORIZED
+      })
+    }
+
+    // 5️⃣ Kiểm tra token đã hết hạn chưa (nếu có field expiresAt)
+    if (storedToken.expiresAt && storedToken.expiresAt < new Date()) {
+      // ❌ Test Case: Expired refresh token
+      // Xóa token hết hạn khỏi DB
+      await RefreshTokenModel.deleteOne({ _id: storedToken._id })
+
+      throw new ErrorWithStatus({
+        message: userMessages.REFRESH_TOKEN_EXPIRED,
+        status: httpStatus.UNAUTHORIZED
+      })
+    }
+
+    // 6️⃣ Lấy thông tin user từ database
+    const user = (await UserModel.findById(decoded.user_id)) as User
+
+    if (!user) {
+      throw new ErrorWithStatus({
+        message: userMessages.USER_NOT_FOUND,
+        status: httpStatus.NOT_FOUND
+      })
+    }
+
+    // 7️⃣ Kiểm tra user đã verify email chưa
+    if (user.verify !== UserVerifyStatus.Verified) {
+      throw new ErrorWithStatus({
+        message: userMessages.USER_ACCOUNT_NOT_VERIFIED,
+        status: httpStatus.ACCESS_DENIED
+      })
+    }
+
+    // 8️⃣ Tạo Access Token mới
+    const newAccessToken = await this.signAccessToken({
+      user_id: user._id!.toString(),
+      verify: UserVerifyStatus.Verified
+    })
+
+    // 9️⃣ (Optional) Tạo Refresh Token mới và xóa token cũ
+    // Cách này an toàn hơn, mỗi lần refresh sẽ có token mới
+    const newRefreshToken = await this.signRefreshToken({
+      user_id: user._id!.toString(),
+      verify: UserVerifyStatus.Verified
+    })
+
+    // Decode để lấy expiration time
+    const decodedNewToken = jwt.decode(newRefreshToken) as jwt.JwtPayload | null
+
+    // Xóa refresh token cũ
+    await RefreshTokenModel.deleteOne({ _id: storedToken._id })
+
+    // Lưu refresh token mới
+    await RefreshTokenModel.create({
+      user_id: user._id,
+      token: newRefreshToken,
+      expiresAt: decodedNewToken?.exp ? new Date(decodedNewToken.exp * 1000) : undefined,
+      isRevoked: false
+    })
+
+    // ✅ Test Case: Valid refresh token → Return new tokens
+    return {
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        role: user.verify,
+        avatar: user.avatar
+      }
+    }
+  },
+  async getMeProfile(user_id: string) {
+    const user = await UserModel.findOne(
+      { _id: new ObjectId(user_id) },
+      // Tham số thứ 2 của Mongoose findOne là object projection
+      {
+        password: 0,
+        email_verify_token: 0,
+        forgot_password_token: 0
+      }
+    )
+    return user
   }
 }

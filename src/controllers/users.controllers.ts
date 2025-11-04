@@ -16,16 +16,16 @@ import mongoose, { ObjectId } from 'mongoose'
 import UserModel from '~/models/users.model'
 import httpStatus from '~/constants/httpStatus'
 import { userMessages } from '~/constants/messages'
-import { UserVeryfyStatus } from '~/constants/enum'
+import { UserVerifyStatus } from '~/constants/enum'
 import { config } from 'dotenv'
 config()
 
 export const loginController = async (req: Request<ParamsDictionary, any, LoginRequestBody>, res: Response) => {
   const { user }: any = req
 
-  const user_id = user._id
+  const user_id = user._id.toString()
 
-  const result = await UserService.login(user_id)
+  const result = await UserService.login({ user_id, verify: user.verify })
 
   return res.json({ message: 'Login successful', result })
 }
@@ -113,7 +113,7 @@ export const resendVerifyEmailController = async (req: Request, res: Response, n
   if (!user) {
     return res.status(httpStatus.NOT_FOUND).json({ message: userMessages.USER_NOT_FOUND })
   }
-  if (user.verify === UserVeryfyStatus.Verified) {
+  if (user.verify === UserVerifyStatus.Verified) {
     return res.json({ message: userMessages.EMAIL_ALREADY_VERIFIED })
   }
   const result = await UserService.resendVerifyEmail(user_id)
@@ -124,12 +124,12 @@ export const forgotPasswordController = async (
   req: Request<ParamsDictionary, any, ForgotPasswordRequestBody>,
   res: Response
 ) => {
-  const { _id } = req.user!
+  const { _id, verify } = req.user!
   if (!_id) {
     return res.status(401).json({ message: userMessages.USER_NOT_FOUND })
   }
   const user_id = _id.toString()
-  const result = await UserService.forgotPassword(user_id)
+  const result = await UserService.forgotPassword({ user_id, verify })
   return res.json(result)
 }
 
@@ -156,4 +156,39 @@ export const oauthGoogleController = async (req: Request, res: Response) => {
   const { accessToken, refreshToken, newUser } = await UserService.oauthGoogle(code as string)
   const urlRedirect = `${process.env.CLIENT_URL}?access_token=${accessToken}&refresh_token=${refreshToken}&newUser=${newUser}`
   return res.redirect(urlRedirect)
+}
+
+export const refreshTokenController = async (req: Request, res: Response) => {
+  try {
+    const { refresh_token } = req.body
+
+    // Call service
+    const result = await UserService.refreshToken(refresh_token)
+
+    // ✅ Success response
+    return res.status(200).json({
+      success: true,
+      message: 'Token refreshed successfully',
+      data: result
+    })
+  } catch (error: any) {
+    // ❌ Error responses (401, 404, 403)
+    const status = error.status || 500
+    const message = error.message || 'Internal server error'
+
+    return res.status(status).json({
+      success: false,
+      message
+    })
+  }
+}
+
+export const getMeController = async (req: Request, res: Response) => {
+  const { user_id } = req.decoded_authorization as TokenPayload
+  const user = await UserService.getMeProfile(user_id)
+  return res.json({ message: userMessages.GET_ME_SUCCESSFULLY, result: user })
+}
+
+export const updateMeController = async (req: Request, res: Response) => {
+  return res.json({ message: userMessages.UPDATE_ME_SUCCESSFULLY })
 }

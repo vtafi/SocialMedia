@@ -40,5 +40,12 @@ export const userMessages = {
   FORGOT_PASSWORD_TOKEN_INVALID: 'Forgot password token is invalid',
   RESET_PASSWORD_SUCCESSFULLY: 'Reset password successfully',
   EMAIL_NOT_VERIFIED: 'Email not verified, please verify your email first',
-  REGISTER_SUCCESSFUL: 'Register successful'
+  REGISTER_SUCCESSFUL: 'Register successful',
+  REFRESH_TOKEN_INVALID: 'Refresh token is invalid',
+  REFRESH_TOKEN_NOT_FOUND: 'Refresh token not found',
+  REFRESH_TOKEN_REVOKED: 'Refresh token revoked',
+  REFRESH_TOKEN_EXPIRED: 'Refresh token expired',
+  USER_ACCOUNT_NOT_VERIFIED: 'User account not verified',
+  GET_ME_SUCCESSFULLY: 'Get me successfully',
+  UPDATE_ME_SUCCESSFULLY: 'Update me successfully'
 } as const

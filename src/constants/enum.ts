@@ -1,4 +1,4 @@
-export enum UserVeryfyStatus {
+export enum UserVerifyStatus {
   Unverified,
   Verified,
   Banned
