@@ -93,6 +93,22 @@ const forgotPasswordTokenSchema: ParamSchema = {
     }
   }
 }
+const nameSchema: ParamSchema = {
+  notEmpty: {
+    errorMessage: userMessages.NAME_REQUIRED
+  },
+  isString: {
+    errorMessage: userMessages.NAME_MUST_BE_STRING
+  },
+  trim: true
+}
+const dobSchema: ParamSchema = {
+  isISO8601: {
+    options: { strict: true, strictSeparator: true },
+    errorMessage: userMessages.DATE_OF_BIRTH_INVALID
+  },
+  notEmpty: { errorMessage: userMessages.DATE_OF_BIRTH_REQUIRED }
+}
 
 export const loginValidator = validate(
   checkSchema(
@@ -134,17 +150,7 @@ export const loginValidator = validate(
 export const registerValidator = validate(
   checkSchema(
     {
-      name: {
-        isLength: {
-          options: { min: 3, max: 50 },
-          errorMessage: userMessages.NAME_LIMIT
-        },
-        notEmpty: {
-          errorMessage: userMessages.NAME_REQUIRED
-        },
-        trim: true,
-        isString: true
-      },
+      name: nameSchema,
       email: {
         isEmail: true,
         notEmpty: true,
@@ -162,13 +168,7 @@ export const registerValidator = validate(
       },
       password: passwordSchema,
       confirmPassword: confirmPasswordSchema,
-      date_of_birth: {
-        isISO8601: {
-          options: { strict: true, strictSeparator: true },
-          errorMessage: userMessages.DATE_OF_BIRTH_INVALID
-        },
-        notEmpty: { errorMessage: userMessages.DATE_OF_BIRTH_REQUIRED }
-      }
+      date_of_birth: dobSchema
     },
     ['body']
   )
@@ -382,3 +382,83 @@ export const verifyUserValidator = (req: Request, res: Response, next: NextFunct
   }
   next()
 }
+
+export const updateMeValidator = validate(
+  checkSchema(
+    {
+      name: {
+        ...nameSchema,
+        optional: true,
+        trim: true
+      },
+      date_of_birth: { ...dobSchema, optional: true },
+      bio: {
+        optional: true,
+        isString: {
+          errorMessage: userMessages.BIO_STRING_REQUIRED
+        },
+        isLength: {
+          options: { min: 1, max: 100 },
+          errorMessage: userMessages.BIO_LIMITED_LENGTH
+        },
+        trim: true
+      },
+      location: {
+        optional: true,
+        isString: {
+          errorMessage: userMessages.LOCATION_STRING_REQUIRED
+        },
+        isLength: {
+          options: { min: 1, max: 100 },
+          errorMessage: userMessages.LOCATION_LIMITED_LENGTH
+        },
+        trim: true
+      },
+      website: {
+        optional: true,
+        isString: {
+          errorMessage: userMessages.WEBSITE_STRING_REQUIRED
+        },
+        isLength: {
+          options: { min: 1, max: 100 },
+          errorMessage: userMessages.WEBSITE_LIMITED_LENGTH
+        },
+        trim: true
+      },
+      username: {
+        optional: true,
+        isString: {
+          errorMessage: userMessages.USERNAME_STRING_REQUIRED
+        },
+        isLength: {
+          options: { min: 1, max: 100 },
+          errorMessage: userMessages.USERNAME_LIMITED_LENGTH
+        },
+        trim: true
+      },
+      avatar: {
+        optional: true,
+        isString: {
+          errorMessage: userMessages.AVATAR_URL_REQUIRED
+        },
+        isLength: {
+          options: { min: 1, max: 400 },
+          errorMessage: userMessages.AVATAR_URL_LIMITED_LENGTH
+        },
+        trim: true
+      },
+      cover_photo: {
+        optional: true,
+        isString: {
+          errorMessage: userMessages.COVER_IMAGE_URL_REQUIRED
+        },
+        isLength: {
+          options: { min: 1, max: 400 },
+          errorMessage: userMessages.COVER_IMAGE_URL_LIMITED_LENGTH
+        },
+        trim: true
+      }
+    },
+    ['body']
+  )
+)

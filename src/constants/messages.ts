@@ -47,5 +47,18 @@ export const userMessages = {
   REFRESH_TOKEN_EXPIRED: 'Refresh token expired',
   USER_ACCOUNT_NOT_VERIFIED: 'User account not verified',
   GET_ME_SUCCESSFULLY: 'Get me successfully',
-  UPDATE_ME_SUCCESSFULLY: 'Update me successfully'
+  UPDATE_ME_SUCCESSFULLY: 'Update me successfully',
+  NAME_MUST_BE_STRING: 'Name must be a string',
+  BIO_STRING_REQUIRED: 'Bio must be a string',
+  BIO_LIMITED_LENGTH: 'Bio must be at least 1 character long and at most 100 characters long',
+  LOCATION_STRING_REQUIRED: 'Location must be a string',
+  LOCATION_LIMITED_LENGTH: 'Location must be at least 1 character long and at most 100 characters long',
+  WEBSITE_STRING_REQUIRED: 'Website must be a string',
+  WEBSITE_LIMITED_LENGTH: 'Website must be at least 1 character long and at most 100 characters long',
+  USERNAME_STRING_REQUIRED: 'Username must be a string',
+  USERNAME_LIMITED_LENGTH: 'Username must be at least 1 character long and at most 100 characters long',
+  AVATAR_URL_REQUIRED: 'Avatar URL is required',
+  AVATAR_URL_LIMITED_LENGTH: 'Avatar URL must be at least 1 character long and at most 400 characters long',
+  COVER_IMAGE_URL_REQUIRED: 'Cover image URL is required',
+  COVER_IMAGE_URL_LIMITED_LENGTH: 'Cover image URL must be at least 1 character long and at most 400 characters long'
 } as const

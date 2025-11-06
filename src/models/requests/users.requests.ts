@@ -34,3 +34,13 @@ export interface ResetPasswordRequestBody {
   password: string
   confirmPassword: string
 }
+export interface UpdateMeRequestBody {
+  name?: string
+  date_of_birth?: string
+  bio?: string
+  location?: string
+  website?: string
+  username?: string
+  avatar?: string
+  cover_photo?: string
+}

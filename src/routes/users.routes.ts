@@ -15,6 +15,7 @@ import {
   getMeController,
   updateMeController
 } from '~/controllers/users.controllers'
+import { filterMiddleware } from '~/middlewares/common.middlewares'
 import {
   accessTokenValidator,
   emailVerifyTokenValidator,
@@ -23,9 +24,11 @@ import {
   refreshTokenValidator,
   registerValidator,
   resetPasswordValidator,
+  updateMeValidator,
   verifyForgotPasswordTokenValidator,
   verifyUserValidator
 } from '~/middlewares/users.middlewares'
+import { UpdateMeRequestBody } from '~/models/requests/users.requests'
 import { wrapAsync } from '~/utils/handlers'
 
 const usersRouter = Router()
@@ -129,7 +132,23 @@ usersRouter.get('/me', accessTokenValidator, wrapAsync(getMeController))
   Method: PATCH
   Headers: { Authorization: 'Bearer <access_token>' }
 */
-usersRouter.patch('/me', accessTokenValidator, verifyUserValidator, wrapAsync(updateMeController))
+usersRouter.patch(
+  '/me',
+  accessTokenValidator,
+  verifyUserValidator,
+  updateMeValidator,
+  filterMiddleware<UpdateMeRequestBody>([
+    'name',
+    'date_of_birth',
+    'bio',
+    'location',
+    'website',
+    'username',
+    'avatar',
+    'cover_photo'
+  ]),
+  wrapAsync(updateMeController)
+)
 
 usersRouter.post('/find', searchByEmailController)
 usersRouter.put('/update/:id', updateUserController)

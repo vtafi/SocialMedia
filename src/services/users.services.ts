@@ -1,6 +1,6 @@
 import UserModel from '~/models/users.model'
 import { User } from '~/models/schemas/user.schema'
-import { RegisterRequestBody } from '~/models/requests/users.requests'
+import { RegisterRequestBody, UpdateMeRequestBody } from '~/models/requests/users.requests'
 import { hashPassword } from '~/utils/crypto'
 import { signToken, verifyToken } from '~/utils/jwt'
 import { TokenType, UserVerifyStatus } from '~/constants/enum'
@@ -380,5 +380,9 @@ export const UserService = {
       }
     )
     return user
+  },
+  async updateMe(user_id: string, body: UpdateMeRequestBody) {
+    const updatedUser = await UserModel.findByIdAndUpdate(user_id, body, { new: true })
+    return updatedUser
   }
 }
