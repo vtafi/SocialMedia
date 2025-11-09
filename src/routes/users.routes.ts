@@ -13,17 +13,21 @@ import {
   oauthGoogleController,
   refreshTokenController,
   getMeController,
-  updateMeController
+  updateMeController,
+  followUserController,
+  unfollowUserController
 } from '~/controllers/users.controllers'
 import { filterMiddleware } from '~/middlewares/common.middlewares'
 import {
   accessTokenValidator,
   emailVerifyTokenValidator,
+  followUserValidator,
   forgotPasswordValidator,
   loginValidator,
   refreshTokenValidator,
   registerValidator,
   resetPasswordValidator,
+  unfollowUserValidator,
   updateMeValidator,
   verifyForgotPasswordTokenValidator,
   verifyUserValidator
@@ -148,6 +152,35 @@ usersRouter.patch(
     'cover_photo'
   ]),
   wrapAsync(updateMeController)
+)
+
+/*
+  Description: Follow a user
+  Path: /:user_id/follow
+  Method: POST
+  Headers: { Authorization: 'Bearer <access_token>' }
+  Body: { followed_user_id: string }
+*/
+usersRouter.post(
+  '/follow',
+  accessTokenValidator,
+  verifyUserValidator,
+  followUserValidator,
+  wrapAsync(followUserController)
+)
+
+/*
+  Description: Unfollow a user
+  Path: /users/unfollow/:followed_user_id
+  Method: DELETE
+  Headers: { Authorization: 'Bearer <access_token>' }
+*/
+usersRouter.delete(
+  '/unfollow/:followed_user_id',
+  accessTokenValidator,
+  verifyUserValidator,
+  unfollowUserValidator,
+  wrapAsync(unfollowUserController)
 )
 
 usersRouter.post('/find', searchByEmailController)

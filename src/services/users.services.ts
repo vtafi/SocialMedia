@@ -13,6 +13,7 @@ import axios from 'axios'
 import { ErrorWithStatus } from '~/utils/errors'
 import httpStatus from '~/constants/httpStatus'
 import jwt from 'jsonwebtoken'
+import FollowersModel from '~/models/followers.model'
 
 config()
 export const UserService = {
@@ -384,5 +385,76 @@ export const UserService = {
   async updateMe(user_id: string, body: UpdateMeRequestBody) {
     const updatedUser = await UserModel.findByIdAndUpdate(user_id, body, { new: true })
     return updatedUser
+  },
+  async followUser(user_id: string, followed_user_id: string) {
+    // ✅ Validate input
+    if (!followed_user_id) {
+      throw new ErrorWithStatus({
+        message: userMessages.FOLLOWED_USER_ID_REQUIRED,
+        status: httpStatus.BAD_REQUEST
+      })
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(followed_user_id)) {
+      throw new ErrorWithStatus({
+        message: userMessages.FOLLOWED_USER_ID_MUST_BE_VALID_OBJECT_ID,
+        status: httpStatus.BAD_REQUEST
+      })
+    }
+
+    // Kiểm tra user có tồn tại không
+    const followedUser = await UserModel.findById(followed_user_id)
+    if (!followedUser) {
+      throw new ErrorWithStatus({
+        message: userMessages.USER_TO_FOLLOW_NOT_FOUND,
+        status: httpStatus.NOT_FOUND
+      })
+    }
+
+    // Kiểm tra đã follow chưa
+    const existingFollow = await FollowersModel.findOne({
+      user_id: new ObjectId(user_id),
+      followed_user_id: new ObjectId(followed_user_id)
+    })
+
+    if (existingFollow) {
+      throw new ErrorWithStatus({
+        message: userMessages.ALREADY_FOLLOWING_THIS_USER,
+        status: httpStatus.BAD_REQUEST
+      })
+    }
+
+    const session = await mongoose.startSession()
+    session.startTransaction()
+    try {
+      await FollowersModel.create({
+        user_id: new ObjectId(user_id),
+        followed_user_id: new ObjectId(followed_user_id)
+      })
+      await session.commitTransaction()
+      return { message: userMessages.FOLLOWED_SUCCESSFULLY }
+    } catch (error) {
+      await session.abortTransaction()
+      throw error
+    } finally {
+      session.endSession()
+    }
+  },
+  async unfollowUser(user_id: string, followed_user_id: string) {
+    const existingFollow = await FollowersModel.findOne({
+      user_id: new ObjectId(user_id),
+      followed_user_id: new ObjectId(followed_user_id)
+    })
+    if (existingFollow === null) {
+      throw new ErrorWithStatus({
+        message: userMessages.USER_NOT_FOLLOWING_THIS_USER,
+        status: httpStatus.NOT_FOUND
+      })
+    }
+    await FollowersModel.deleteOne({
+      user_id: new ObjectId(user_id),
+      followed_user_id: new ObjectId(followed_user_id)
+    })
+    return { message: userMessages.UNFOLLOWED_SUCCESSFULLY }
   }
 }

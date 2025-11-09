@@ -12,6 +12,8 @@ import RefreshTokenModel from '~/models/refreshToken.model'
 import { JsonWebTokenError } from 'jsonwebtoken'
 import { UserVerifyStatus } from '~/constants/enum'
 import { TokenPayload } from '~/models/requests/users.requests'
+import mongoose from 'mongoose'
+import { REGEX_USERNAME } from '~/constants/regex'
 
 const passwordSchema: ParamSchema = {
   notEmpty: true,
@@ -430,9 +432,23 @@ export const updateMeValidator = validate(
         isString: {
           errorMessage: userMessages.USERNAME_STRING_REQUIRED
         },
-        isLength: {
-          options: { min: 1, max: 100 },
-          errorMessage: userMessages.USERNAME_LIMITED_LENGTH
+        custom: {
+          options: async (value, { req }) => {
+            if (!REGEX_USERNAME.test(value)) {
+              throw new ErrorWithStatus({
+                message: userMessages.USERNAME_INVALID,
+                status: httpStatus.UNPROCESSABLE_ENTITY
+              })
+            }
+            const user = await UserModel.findOne({ username: value })
+            if (user !== null) {
+              throw new ErrorWithStatus({
+                message: userMessages.USERNAME_ALREADY_IN_USE,
+                status: httpStatus.UNPROCESSABLE_ENTITY
+              })
+            }
+            return true
+          }
         },
         trim: true
       },
@@ -460,5 +476,59 @@ export const updateMeValidator = validate(
       }
     },
     ['body']
+  )
+)
+
+export const followUserValidator = validate(
+  checkSchema(
+    {
+      followed_user_id: {
+        custom: {
+          options: (value, { req }) => {
+            if (!mongoose.Types.ObjectId.isValid(value)) {
+              throw new ErrorWithStatus({
+                message: userMessages.FOLLOWED_USER_ID_MUST_BE_VALID_OBJECT_ID,
+                status: httpStatus.UNPROCESSABLE_ENTITY
+              })
+            }
+            return true
+          }
+        },
+        notEmpty: {
+          errorMessage: userMessages.FOLLOWED_USER_ID_REQUIRED
+        },
+        isString: {
+          errorMessage: userMessages.FOLLOWED_USER_ID_MUST_BE_STRING
+        }
+      }
+    },
+    ['body']
+  )
+)
+
+export const unfollowUserValidator = validate(
+  checkSchema(
+    {
+      followed_user_id: {
+        custom: {
+          options: (value, { req }) => {
+            if (!mongoose.Types.ObjectId.isValid(value)) {
+              throw new ErrorWithStatus({
+                message: userMessages.UNFOLLOWED_USER_ID_MUST_BE_VALID_OBJECT_ID,
+                status: httpStatus.UNPROCESSABLE_ENTITY
+              })
+            }
+            return true
+          }
+        },
+        notEmpty: {
+          errorMessage: userMessages.UNFOLLOWED_USER_ID_REQUIRED
+        },
+        isString: {
+          errorMessage: userMessages.UNFOLLOWED_USER_ID_MUST_BE_STRING
+        }
+      }
+    },
+    ['params']
   )
 )

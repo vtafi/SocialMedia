@@ -60,5 +60,20 @@ export const userMessages = {
   AVATAR_URL_REQUIRED: 'Avatar URL is required',
   AVATAR_URL_LIMITED_LENGTH: 'Avatar URL must be at least 1 character long and at most 400 characters long',
   COVER_IMAGE_URL_REQUIRED: 'Cover image URL is required',
-  COVER_IMAGE_URL_LIMITED_LENGTH: 'Cover image URL must be at least 1 character long and at most 400 characters long'
+  COVER_IMAGE_URL_LIMITED_LENGTH: 'Cover image URL must be at least 1 character long and at most 400 characters long',
+  FOLLOW_USER_SUCCESSFULLY: 'Follow user successfully',
+  FOLLOWED_USER_ID_REQUIRED: 'Followed user ID is required',
+  FOLLOWED_USER_ID_MUST_BE_STRING: 'Followed user ID must be a string',
+  FOLLOWED_USER_ID_MUST_BE_VALID_OBJECT_ID: 'Followed user ID must be a valid ObjectId',
+  USER_TO_FOLLOW_NOT_FOUND: 'User to follow not found',
+  ALREADY_FOLLOWING_THIS_USER: 'Already following this user',
+  FOLLOWED_SUCCESSFULLY: 'Followed successfully',
+  UNFOLLOWED_USER_ID_REQUIRED: 'Unfollowed user ID is required',
+  UNFOLLOWED_USER_ID_MUST_BE_STRING: 'Unfollowed user ID must be a string',
+  UNFOLLOWED_USER_ID_MUST_BE_VALID_OBJECT_ID: 'Unfollowed user ID must be a valid ObjectId',
+  UNFOLLOWED_SUCCESSFULLY: 'Unfollowed successfully',
+  USER_NOT_FOLLOWING_THIS_USER: 'User not following this user',
+  USERNAME_INVALID:
+    'Username must be at least 4 characters long and at most 15 characters long and contain only letters, numbers, and underscores',
+  USERNAME_ALREADY_IN_USE: 'Username already in use'
 } as const

@@ -3,12 +3,14 @@ import User from '~/models/users.model'
 import { ParamsDictionary } from 'express-serve-static-core'
 import { UserService } from '~/services/users.services'
 import {
+  FollowUserRequestBody,
   ForgotPasswordRequestBody,
   LoginRequestBody,
   LogoutRequestBody,
   RegisterRequestBody,
   ResetPasswordRequestBody,
   TokenPayload,
+  UnfollowRequestParams,
   UpdateMeRequestBody,
   VerifyEmailRequestBody,
   VerifyForgotPasswordRequestBody
@@ -196,4 +198,21 @@ export const updateMeController = async (req: Request<ParamsDictionary, any, Upd
   const body = req.body
   const result = await UserService.updateMe(user_id, body)
   return res.json({ message: userMessages.UPDATE_ME_SUCCESSFULLY, result })
+}
+
+export const followUserController = async (
+  req: Request<ParamsDictionary, any, FollowUserRequestBody>,
+  res: Response
+) => {
+  const { user_id } = req.decoded_authorization as TokenPayload
+  const { followed_user_id } = req.body
+  const result = await UserService.followUser(user_id, followed_user_id)
+  return res.json(result)
+}
+
+export const unfollowUserController = async (req: Request<UnfollowRequestParams>, res: Response) => {
+  const { user_id } = req.decoded_authorization as TokenPayload
+  const { followed_user_id } = req.params
+  const result = await UserService.unfollowUser(user_id, followed_user_id)
+  return res.json(result)
 }
