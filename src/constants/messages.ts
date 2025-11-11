@@ -77,3 +77,17 @@ export const userMessages = {
     'Username must be at least 4 characters long and at most 15 characters long and contain only letters, numbers, and underscores',
   USERNAME_ALREADY_IN_USE: 'Username already in use'
 } as const
+
+export const fileMessages = {
+  FILE_TYPE_NOT_VALID: 'File type is not valid',
+  FILE_SIZE_TOO_LARGE: 'File size is too large',
+  FILE_SIZE_TOO_SMALL: 'File size is too small',
+  FILE_SIZE_REQUIRED: 'File size is required',
+  FILE_SIZE_INVALID: 'File size is invalid',
+  FILE_SIZE_LIMIT: 'File size must be at least 1 byte and at most 30MB',
+  FILE_EMPTY: 'File is empty'
+} as const
+
+export const imageMessages = {
+  IMAGE_UPLOADED_SUCCESSFULLY: 'Image uploaded successfully'
+} as const
