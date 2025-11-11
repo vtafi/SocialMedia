@@ -1,16 +1,26 @@
 import { Request, Response } from 'express'
 import formidable, { File } from 'formidable'
-import path, { resolve } from 'path'
 import { ErrorWithStatus } from './error'
 import { fileMessages } from '~/constants/messages'
 import httpStatus from '~/constants/httpStatus'
+import fs from 'fs'
+import { UPLOAD_DIR, UPLOAD_TEMP_DIR } from '~/constants/dir'
+
+export const initFolder = () => {
+  if (!fs.existsSync(UPLOAD_TEMP_DIR)) {
+    fs.mkdirSync(UPLOAD_TEMP_DIR, { recursive: true })
+  }
+  if (!fs.existsSync(UPLOAD_DIR)) {
+    fs.mkdirSync(UPLOAD_DIR, { recursive: true })
+  }
+}
 
 export const handleUploadImage = async (req: Request) => {
   const form = formidable({
-    uploadDir: path.resolve('uploads'),
+    uploadDir: UPLOAD_TEMP_DIR,
     maxFiles: 1,
     keepExtensions: true,
-    maxFileSize: 30 * 1024,
+    maxFileSize: 4000 * 1024,
     filter: function ({ name, originalFilename, mimetype }) {
       const valid = name === 'image' && Boolean(mimetype?.includes('image'))
       if (!valid)
@@ -33,4 +43,15 @@ export const handleUploadImage = async (req: Request) => {
       resolve((files.image as File[])[0])
     })
   })
+}
+
+export const getNameFromFullName = (fullName: string) => {
+  const nameArray = fullName.split('.')
+  nameArray.pop()
+  return nameArray.join('.')
+}
+
+export const getExtensionFromFullName = (fullName: string) => {
+  const nameArray = fullName.split('.')
+  return nameArray.pop()
 }
