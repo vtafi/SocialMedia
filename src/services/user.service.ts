@@ -1,6 +1,6 @@
-import UserModel from '~/models/users.model'
+import UserModel from '~/models/user.model'
 import { User } from '~/models/schemas/user.schema'
-import { RegisterRequestBody, UpdateMeRequestBody } from '~/models/requests/users.requests'
+import { RegisterRequestBody, UpdateMeRequestBody } from '~/models/requests/user.requests'
 import { hashPassword } from '~/utils/crypto'
 import { signToken, verifyToken } from '~/utils/jwt'
 import { TokenType, UserVerifyStatus } from '~/constants/enum'
@@ -10,10 +10,10 @@ import { ObjectId } from 'mongodb'
 import { config } from 'dotenv'
 import { userMessages } from '~/constants/messages'
 import axios from 'axios'
-import { ErrorWithStatus } from '~/utils/errors'
+import { ErrorWithStatus } from '~/utils/error'
 import httpStatus from '~/constants/httpStatus'
 import jwt from 'jsonwebtoken'
-import FollowersModel from '~/models/followers.model'
+import FollowersModel from '~/models/follower.model'
 
 config()
 export const UserService = {

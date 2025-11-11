@@ -1,8 +1,8 @@
 import { config } from 'dotenv'
 import jwt, { JwtPayload } from 'jsonwebtoken'
 import { userMessages } from '~/constants/messages'
-import { TokenPayload } from '~/models/requests/users.requests'
-import { ErrorWithStatus } from './errors'
+import { TokenPayload } from '~/models/requests/user.requests'
+import { ErrorWithStatus } from './error'
 import httpStatus from '~/constants/httpStatus'
 
 config()

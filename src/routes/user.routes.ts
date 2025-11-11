@@ -16,7 +16,7 @@ import {
   updateMeController,
   followUserController,
   unfollowUserController
-} from '~/controllers/users.controllers'
+} from '~/controllers/user.controller'
 import { filterMiddleware } from '~/middlewares/common.middlewares'
 import {
   accessTokenValidator,
@@ -31,9 +31,9 @@ import {
   updateMeValidator,
   verifyForgotPasswordTokenValidator,
   verifyUserValidator
-} from '~/middlewares/users.middlewares'
-import { UpdateMeRequestBody } from '~/models/requests/users.requests'
-import { wrapAsync } from '~/utils/handlers'
+} from '~/middlewares/user.middlewares'
+import { UpdateMeRequestBody } from '~/models/requests/user.requests'
+import { wrapAsync } from '~/utils/handler'
 
 const usersRouter = Router()
 

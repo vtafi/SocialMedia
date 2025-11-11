@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
-import User from '~/models/users.model'
+import User from '~/models/user.model'
 import { ParamsDictionary } from 'express-serve-static-core'
-import { UserService } from '~/services/users.services'
+import { UserService } from '~/services/user.service'
 import {
   FollowUserRequestBody,
   ForgotPasswordRequestBody,
@@ -14,9 +14,9 @@ import {
   UpdateMeRequestBody,
   VerifyEmailRequestBody,
   VerifyForgotPasswordRequestBody
-} from '~/models/requests/users.requests'
+} from '~/models/requests/user.requests'
 import mongoose, { ObjectId } from 'mongoose'
-import UserModel from '~/models/users.model'
+import UserModel from '~/models/user.model'
 import httpStatus from '~/constants/httpStatus'
 import { userMessages } from '~/constants/messages'
 import { UserVerifyStatus } from '~/constants/enum'

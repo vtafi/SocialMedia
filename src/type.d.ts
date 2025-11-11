@@ -1,7 +1,7 @@
 import { Request } from 'express'
 import { User } from './models/schemas/user.schema'
 import { TokenType } from './constants/enum'
-import { TokenPayload } from './models/requests/users.requests'
+import { TokenPayload } from './models/requests/user.requests'
 
 declare module 'express' {
   interface Request {

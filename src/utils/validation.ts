@@ -1,7 +1,7 @@
 import express from 'express'
 import { validationResult, ValidationChain } from 'express-validator'
 import { RunnableValidationChains } from 'express-validator/lib/middlewares/schema'
-import { EntityError, ErrorWithStatus } from './errors'
+import { EntityError, ErrorWithStatus } from './error'
 import httpStatus from '~/constants/httpStatus'
 
 // can be reused by many routes

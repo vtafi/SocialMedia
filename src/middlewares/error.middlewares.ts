@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express-serve-static-core'
 import { omit } from 'lodash'
 import httpStatus from '~/constants/httpStatus'
-import { ErrorWithStatus } from '~/utils/errors'
+import { ErrorWithStatus } from '~/utils/error'
 
 export const defaultErrorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
   if (err instanceof ErrorWithStatus) {
