@@ -89,5 +89,11 @@ export const fileMessages = {
 } as const
 
 export const imageMessages = {
-  IMAGE_UPLOADED_SUCCESSFULLY: 'Image uploaded successfully'
+  IMAGE_UPLOADED_SUCCESSFULLY: 'Image uploaded successfully',
+  IMAGE_NOT_FOUND: 'Image not found'
+} as const
+
+export const videoMessages = {
+  VIDEO_UPLOADED_SUCCESSFULLY: 'Video uploaded successfully',
+  VIDEO_NOT_FOUND: 'Video not found'
 } as const

@@ -360,14 +360,7 @@ export const UserService = {
     // ✅ Test Case: Valid refresh token → Return new tokens
     return {
       accessToken: newAccessToken,
-      refreshToken: newRefreshToken,
-      user: {
-        id: user._id,
-        email: user.email,
-        name: user.name,
-        role: user.verify,
-        avatar: user.avatar
-      }
+      refreshToken: newRefreshToken
     }
   },
   async getMeProfile(user_id: string) {
