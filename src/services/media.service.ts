@@ -8,7 +8,41 @@ import { isProduction } from '~/constants/config'
 import { config } from 'dotenv'
 import { MediaType } from '~/constants/enum'
 import { Media } from '~/models/other'
+import { encodeHLSWithMultipleVideoStreams } from '~/utils/video'
+import fsPromise from 'fs/promises'
 config()
+class Queue {
+  items: string[]
+  encoding: boolean
+  constructor() {
+    this.items = []
+    this.encoding = false
+  }
+  enqueue(item: string) {
+    this.items.push(item)
+    this.processEncode()
+  }
+  async processEncode() {
+    if (this.encoding) return
+    if (this.items.length > 0) {
+      this.encoding = true
+      const videoPath = this.items[0]
+      try {
+        await encodeHLSWithMultipleVideoStreams(videoPath)
+        this.items.shift()
+        await fsPromise.unlink(videoPath)
+        console.log(`Encoded ${videoPath}`)
+      } catch (error) {
+        console.error(error)
+      }
+      this.encoding = false
+      this.processEncode()
+    } else {
+      console.log('No more videos to encode')
+    }
+  }
+}
+const queue = new Queue()
 export const MediaService = {
   async uploadImage(req: Request) {
     const file = await handleUploadImage(req)
@@ -30,13 +64,28 @@ export const MediaService = {
   },
 
   async uploadVideo(req: Request) {
-    const file = await handleUploadVideo(req)
-    const newName = file[0].newFilename
+    const { files } = await handleUploadVideo(req)
+    const newName = files[0].newFilename
     return {
       url: isProduction
         ? `${process.env.HOST}/static/video-stream/${newName}`
         : `http://localhost:${process.env.PORT}/static/video-stream/${newName}`,
       type: MediaType.Video
     }
+  },
+  async uploadVideoHLS(req: Request) {
+    const { idName, files } = await handleUploadVideo(req)
+    const result: Media[] = await Promise.all(
+      files.map(async (file) => {
+        queue.enqueue(file.filepath)
+        return {
+          url: isProduction
+            ? `${process.env.HOST}/static/video-hls/${idName}.m3u8`
+            : `http://localhost:${process.env.PORT}/static/video-hls/${idName}.m3u8`,
+          type: MediaType.VideoHLS
+        }
+      })
+    )
+    return result
   }
 }

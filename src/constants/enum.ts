@@ -13,5 +13,19 @@ export enum TokenType {
 
 export enum MediaType {
   Image,
-  Video
+  Video,
+  VideoHLS
+}
+
+export enum TweetType {
+  Tweet,
+  ReTweet,
+  Comment,
+  QuoteTweet
+}
+
+export enum TweetAudience {
+  Everyone,
+  TweetCircle,
+  OnlyMe
 }

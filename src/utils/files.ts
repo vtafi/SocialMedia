@@ -5,6 +5,8 @@ import { fileMessages } from '~/constants/messages'
 import httpStatus from '~/constants/httpStatus'
 import fs from 'fs'
 import { UPLOAD_IMAGE_DIR, UPLOAD_IMAGE_TEMP_DIR, UPLOAD_VIDEO_DIR, UPLOAD_VIDEO_TEMP_DIR } from '~/constants/dir'
+import path from 'path'
+import { nanoid } from 'nanoid'
 
 export const initFolder = () => {
   ;[UPLOAD_IMAGE_TEMP_DIR, UPLOAD_VIDEO_TEMP_DIR].forEach((dir) => {
@@ -45,8 +47,11 @@ export const handleUploadImage = async (req: Request) => {
   })
 }
 export const handleUploadVideo = async (req: Request) => {
+  const idName = nanoid()
+  const folderPath = path.resolve(UPLOAD_VIDEO_DIR, idName)
+  fs.mkdirSync(folderPath, { recursive: true })
   const form = formidable({
-    uploadDir: UPLOAD_VIDEO_DIR,
+    uploadDir: folderPath,
     maxFiles: 1,
     keepExtensions: true,
     maxFileSize: 500 * 1024 * 1024,
@@ -60,7 +65,7 @@ export const handleUploadVideo = async (req: Request) => {
       return valid
     }
   })
-  return new Promise<File[]>((resolve, reject) => {
+  return new Promise<{ idName: string; files: File[] }>((resolve, reject) => {
     form.parse(req, (err, fields, files) => {
       if (err) {
         return reject(err)
@@ -69,10 +74,11 @@ export const handleUploadVideo = async (req: Request) => {
       if (!Boolean(files.video)) {
         return reject(new ErrorWithStatus({ message: fileMessages.FILE_EMPTY, status: httpStatus.BAD_REQUEST }))
       }
-      resolve(files.video as File[])
+      resolve({ idName, files: files.video as File[] })
     })
   })
 }
+
 export const getNameFromFullName = (fullName: string) => {
   const nameArray = fullName.split('.')
   nameArray.pop()
