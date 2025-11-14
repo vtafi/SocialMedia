@@ -6,8 +6,8 @@ import mediasRouter from './routes/media.routes'
 import { initFolder } from './utils/files'
 import { config } from 'dotenv'
 import staticRouter from './routes/static.routes'
-import { UPLOAD_VIDEO_DIR } from './constants/dir'
 import cors from 'cors'
+import tweetRouter from './routes/tweet.routes'
 config()
 const app = express()
 const PORT = process.env.PORT || 8386
@@ -18,6 +18,7 @@ app.use(express.json())
 app.use('/users', usersRouter)
 app.use('/medias', mediasRouter)
 app.use('/static', staticRouter)
+app.use('/tweets', tweetRouter)
 connectDB()
 app.use(defaultErrorHandler)
 

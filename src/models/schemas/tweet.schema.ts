@@ -18,15 +18,18 @@ interface Tweet {
   updated_at: Date
 }
 
-export const tweetSchema = new Schema<Tweet>({
-  user_id: { type: Schema.Types.ObjectId, required: true, ref: 'User' },
-  type: { type: Number, enum: TweetType, default: TweetType.Tweet },
-  audience: { type: Number, enum: TweetAudience, default: TweetAudience.Everyone },
-  content: { type: String, default: '' },
-  parent_id: { type: Schema.Types.ObjectId, ref: 'Tweets', default: null },
-  hashtags: { type: [Schema.Types.ObjectId], ref: 'Hashtag', default: [] },
-  mentions: { type: [Schema.Types.ObjectId], ref: 'User', default: [] },
-  medias: { type: Schema.Types.Mixed as any as Media[], default: [] },
-  guest_views: { type: Number, default: 0 },
-  user_views: { type: Number, default: 0 }
-})
+export const tweetSchema = new Schema<Tweet>(
+  {
+    user_id: { type: Schema.Types.ObjectId, required: true, ref: 'User' },
+    type: { type: Number, enum: TweetType, default: TweetType.Tweet },
+    audience: { type: Number, enum: TweetAudience, default: TweetAudience.Everyone },
+    content: { type: String, default: '' },
+    parent_id: { type: Schema.Types.ObjectId, ref: 'Tweets', default: null },
+    hashtags: { type: [Schema.Types.ObjectId], ref: 'Hashtag', default: [] },
+    mentions: { type: [Schema.Types.ObjectId], ref: 'User', default: [] },
+    medias: { type: Schema.Types.Mixed as any as Media[], default: [] },
+    guest_views: { type: Number, default: 0 },
+    user_views: { type: Number, default: 0 }
+  },
+  { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } }
+)

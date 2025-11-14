@@ -97,3 +97,17 @@ export const videoMessages = {
   VIDEO_UPLOADED_SUCCESSFULLY: 'Video uploaded successfully',
   VIDEO_NOT_FOUND: 'Video not found'
 } as const
+
+export const tweetMessages = {
+  INVALID_TYPE: 'Invalid type',
+  INVALID_AUDIENCE: 'Invalid audience',
+  INVALID_CONTENT: 'Invalid content',
+  PARENT_ID_MUST_BE_VALID_OBJECT_ID: 'Parent ID must be a valid ObjectId',
+  PARENT_ID_MUST_BE_NULL: 'Parent ID must be null',
+  CONTENT_MUST_BE_NOT_EMPTY: 'Content must be not empty',
+  CONTENT_MUST_BE_EMPTY: 'Content must be empty',
+  HASHTAGS_MUST_BE_ARRAY_OF_STRINGS: 'Hashtags must be an array of strings',
+  MENTIONS_MUST_BE_ARRAY_OF_OBJECT_IDS: 'Mentions must be an array of ObjectIds',
+  MEDIAS_MUST_BE_ARRAY_OF_OBJECTS: 'Medias must be an array of objects',
+  TWEET_CREATED_SUCCESSFULLY: 'Tweet created successfully'
+}
