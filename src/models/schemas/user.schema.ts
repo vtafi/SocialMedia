@@ -10,6 +10,7 @@ export interface User {
   email_verify_token: string
   forgot_password_token: string
   verify: UserVerifyStatus
+  twitter_circle: ObjectId[]
   bio: string
   location: string
   website: string
@@ -24,10 +25,10 @@ export const userSchema = new Schema<User>(
     email: { type: String, required: true, unique: true },
     date_of_birth: { type: Date, default: null },
     password: { type: String, default: null, select: false },
-
     email_verify_token: { type: String, default: '' },
     forgot_password_token: { type: String, default: '', select: false },
     verify: { type: Number, enum: UserVerifyStatus, default: UserVerifyStatus.Unverified },
+    twitter_circle: { type: [Schema.Types.ObjectId], ref: 'User', default: [] },
     bio: { type: String, default: '' },
     location: { type: String, default: '' },
     website: { type: String, default: '' },

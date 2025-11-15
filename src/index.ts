@@ -8,6 +8,8 @@ import { config } from 'dotenv'
 import staticRouter from './routes/static.routes'
 import cors from 'cors'
 import tweetRouter from './routes/tweet.routes'
+import bookmarkRouter from './routes/bookmark.routes'
+import likeRouter from './routes/like.routes'
 config()
 const app = express()
 const PORT = process.env.PORT || 8386
@@ -19,6 +21,8 @@ app.use('/users', usersRouter)
 app.use('/medias', mediasRouter)
 app.use('/static', staticRouter)
 app.use('/tweets', tweetRouter)
+app.use('/bookmarks', bookmarkRouter)
+app.use('/likes', likeRouter)
 connectDB()
 app.use(defaultErrorHandler)
 

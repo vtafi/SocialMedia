@@ -2,7 +2,7 @@ import { model, ObjectId, Schema } from 'mongoose'
 import { TweetAudience, TweetType } from '~/constants/enum'
 import { Media } from '../other'
 
-interface Tweet {
+export interface Tweet {
   _id?: ObjectId
   user_id: ObjectId
   type: TweetType

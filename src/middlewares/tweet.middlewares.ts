@@ -1,11 +1,16 @@
+import { NextFunction, Request, Response } from 'express'
 import { checkSchema } from 'express-validator'
 import { isEmpty } from 'lodash'
 import { ObjectId } from 'mongodb'
-import { MediaType, TweetAudience, TweetType } from '~/constants/enum'
+import { MediaType, TweetAudience, TweetType, UserVerifyStatus } from '~/constants/enum'
 import httpStatus from '~/constants/httpStatus'
-import { tweetMessages } from '~/constants/messages'
+import { tweetMessages, userMessages } from '~/constants/messages'
+import { Tweet } from '~/models/schemas/tweet.schema'
+import TweetModel from '~/models/tweet.model'
+import UserModel from '~/models/user.model'
 import { numberEnumToArray } from '~/utils/commons'
 import { ErrorWithStatus } from '~/utils/error'
+import { wrapAsync } from '~/utils/handler'
 import { validate } from '~/utils/validation'
 
 const tweetTypes = numberEnumToArray(TweetType)
@@ -131,3 +136,64 @@ export const createTweetValidator = validate(
     ['body']
   )
 )
+export const validateTweetId = validate(
+  checkSchema(
+    {
+      tweet_id: {
+        isString: true,
+        isMongoId: true,
+        custom: {
+          options: async (value, { req }) => {
+            if (!ObjectId.isValid(value)) {
+              throw new ErrorWithStatus({
+                message: tweetMessages.TWEET_ID_MUST_BE_VALID_OBJECT_ID,
+                status: httpStatus.BAD_REQUEST
+              })
+            }
+            const tweet = await TweetModel.findById(value)
+            if (!tweet) {
+              throw new ErrorWithStatus({
+                message: tweetMessages.TWEET_NOT_FOUND,
+                status: httpStatus.NOT_FOUND
+              })
+            }
+            ;(req as Request).tweet = tweet
+            return true
+          }
+        }
+      }
+    },
+    ['body', 'params']
+  )
+)
+export const audienceValidator = wrapAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const tweet = req.tweet as Tweet
+  if (tweet.audience === TweetAudience.TweetCircle) {
+    // Kiểm tra người xem tw đã đăng nhập chưa
+    if (!req.decoded_authorization) {
+      throw new ErrorWithStatus({
+        status: httpStatus.UNAUTHORIZED,
+        message: userMessages.ACCESS_TOKEN_IS_REQUIRED
+      })
+    }
+    // Kiểm tra tài khoản bị khóa chưa
+    const author = await UserModel.findById(tweet.user_id)
+    if (!author || author.verify === UserVerifyStatus.Banned) {
+      throw new ErrorWithStatus({
+        status: httpStatus.NOT_FOUND,
+        message: userMessages.USER_NOT_FOUND
+      })
+    }
+    // Kiểm tra người xem tweet này có trong tweet circle của tác giả không
+    const { user_id } = req.decoded_authorization
+    const isInTweetCircle = author.twitter_circle.some((user_circle_id) => user_circle_id.toString() === user_id)
+    // Chỉ throw error nếu user KHÔNG trong circle VÀ user KHÔNG phải author
+    if (!isInTweetCircle && author._id?.toString() !== user_id) {
+      throw new ErrorWithStatus({
+        status: httpStatus.FORBIDDEN,
+        message: tweetMessages.TWEET_IS_NOT_PUBLIC
+      })
+    }
+  }
+  next()
+})

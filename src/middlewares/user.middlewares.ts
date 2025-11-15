@@ -215,7 +215,7 @@ export const accessTokenValidator = validate(
               req.decoded_authorization = decoded_authorization
             } catch (error) {
               throw new ErrorWithStatus({
-                message: (error as JsonWebTokenError).message,
+                message: userMessages.TOKEN_INVALID_OR_EXPIRED,
                 status: httpStatus.UNAUTHORIZED
               })
             }
@@ -532,3 +532,12 @@ export const unfollowUserValidator = validate(
     ['params']
   )
 )
+
+export const isUserLoggedInValidator = (validator: (req: Request, res: Response, next: NextFunction) => void) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (req.headers.authorization) {
+      return validator(req, res, next)
+    }
+    next()
+  }
+}

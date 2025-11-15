@@ -75,7 +75,9 @@ export const userMessages = {
   USER_NOT_FOLLOWING_THIS_USER: 'User not following this user',
   USERNAME_INVALID:
     'Username must be at least 4 characters long and at most 15 characters long and contain only letters, numbers, and underscores',
-  USERNAME_ALREADY_IN_USE: 'Username already in use'
+  USERNAME_ALREADY_IN_USE: 'Username already in use',
+  ACCESS_TOKEN_IS_REQUIRED: 'Access token is required',
+  USER_IS_BANNED: 'User is banned'
 } as const
 
 export const fileMessages = {
@@ -109,5 +111,20 @@ export const tweetMessages = {
   HASHTAGS_MUST_BE_ARRAY_OF_STRINGS: 'Hashtags must be an array of strings',
   MENTIONS_MUST_BE_ARRAY_OF_OBJECT_IDS: 'Mentions must be an array of ObjectIds',
   MEDIAS_MUST_BE_ARRAY_OF_OBJECTS: 'Medias must be an array of objects',
-  TWEET_CREATED_SUCCESSFULLY: 'Tweet created successfully'
+  TWEET_CREATED_SUCCESSFULLY: 'Tweet created successfully',
+  TWEET_ID_MUST_BE_VALID_OBJECT_ID: 'Tweet ID must be a valid ObjectId',
+  TWEET_NOT_FOUND: 'Tweet not found',
+  TWEET_IS_NOT_PUBLIC: 'Tweet is not public'
+}
+
+export const bookmarkMessages = {
+  BOOKMARK_CREATED_SUCCESSFULLY: 'Bookmark created successfully',
+  BOOKMARK_DELETED_SUCCESSFULLY: 'Bookmark deleted successfully',
+  BOOKMARK_NOT_FOUND: 'Bookmark not found'
+}
+
+export const likeMessages = {
+  LIKE_CREATED_SUCCESSFULLY: 'Like created successfully',
+  LIKE_DELETED_SUCCESSFULLY: 'Like deleted successfully',
+  LIKE_NOT_FOUND: 'Like not found'
 }
