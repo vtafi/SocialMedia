@@ -8,6 +8,7 @@ import { tweetMessages, userMessages } from '~/constants/messages'
 import { Tweet } from '~/models/schemas/tweet.schema'
 import TweetModel from '~/models/tweet.model'
 import UserModel from '~/models/user.model'
+import { TweetService } from '~/services/tweet.service'
 import { numberEnumToArray } from '~/utils/commons'
 import { ErrorWithStatus } from '~/utils/error'
 import { wrapAsync } from '~/utils/handler'
@@ -150,7 +151,7 @@ export const validateTweetId = validate(
                 status: httpStatus.BAD_REQUEST
               })
             }
-            const tweet = await TweetModel.findById(value)
+            const tweet = await TweetService.getTweetById(value)
             if (!tweet) {
               throw new ErrorWithStatus({
                 message: tweetMessages.TWEET_NOT_FOUND,
