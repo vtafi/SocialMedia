@@ -198,3 +198,93 @@ export const audienceValidator = wrapAsync(async (req: Request, res: Response, n
   }
   next()
 })
+export const getTweetChildrenValidator = validate(
+  checkSchema(
+    {
+      tweet_type: {
+        isIn: {
+          options: [tweetTypes],
+          errorMessage: tweetMessages.INVALID_TWEET_TYPE
+        }
+      },
+      limit: {
+        isNumeric: true,
+        custom: {
+          options: (value, { req }) => {
+            const num = Number(value)
+            if (num > 100) {
+              throw new ErrorWithStatus({
+                message: tweetMessages.MAX_LIMIT_IS_100,
+                status: httpStatus.UNPROCESSABLE_ENTITY
+              })
+            }
+            if (num < 1) {
+              throw new ErrorWithStatus({
+                message: tweetMessages.MIN_LIMIT_IS_1,
+                status: httpStatus.UNPROCESSABLE_ENTITY
+              })
+            }
+            return true
+          }
+        }
+      },
+      page: {
+        isNumeric: true,
+        custom: {
+          options: (value, { req }) => {
+            const num = Number(value)
+            if (num < 1) {
+              throw new ErrorWithStatus({
+                message: tweetMessages.MIN_PAGE_IS_1,
+                status: httpStatus.UNPROCESSABLE_ENTITY
+              })
+            }
+            return true
+          }
+        }
+      }
+    },
+    ['query']
+  )
+)
+
+export const paginationValidator = validate(
+  checkSchema({
+    limit: {
+      isNumeric: true,
+      custom: {
+        options: (value, { req }) => {
+          const num = Number(value)
+          if (num > 100) {
+            throw new ErrorWithStatus({
+              message: tweetMessages.MAX_LIMIT_IS_100,
+              status: httpStatus.UNPROCESSABLE_ENTITY
+            })
+          }
+          if (num < 1) {
+            throw new ErrorWithStatus({
+              message: tweetMessages.MIN_LIMIT_IS_1,
+              status: httpStatus.UNPROCESSABLE_ENTITY
+            })
+          }
+          return true
+        }
+      }
+    },
+    page: {
+      isNumeric: true,
+      custom: {
+        options: (value, { req }) => {
+          const num = Number(value)
+          if (num < 1) {
+            throw new ErrorWithStatus({
+              message: tweetMessages.MIN_PAGE_IS_1,
+              status: httpStatus.UNPROCESSABLE_ENTITY
+            })
+          }
+          return true
+        }
+      }
+    }
+  })
+)

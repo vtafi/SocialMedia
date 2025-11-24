@@ -114,17 +114,23 @@ export const tweetMessages = {
   TWEET_CREATED_SUCCESSFULLY: 'Tweet created successfully',
   TWEET_ID_MUST_BE_VALID_OBJECT_ID: 'Tweet ID must be a valid ObjectId',
   TWEET_NOT_FOUND: 'Tweet not found',
-  TWEET_IS_NOT_PUBLIC: 'Tweet is not public'
-}
+  TWEET_IS_NOT_PUBLIC: 'Tweet is not public',
+  TWEET_CHILDREN_FETCHED_SUCCESSFULLY: 'Get Tweet children successfully',
+  INVALID_TWEET_TYPE: 'Invalid tweet type',
+  MAX_LIMIT_IS_100: 'Max limit is 100',
+  MIN_LIMIT_IS_1: 'Min limit is 1',
+  MIN_PAGE_IS_1: 'Min page is 1',
+  TWEET_NEW_FEEDS_SUCCESSFULLY: 'Get new feeds successfully'
+} as const
 
 export const bookmarkMessages = {
   BOOKMARK_CREATED_SUCCESSFULLY: 'Bookmark created successfully',
   BOOKMARK_DELETED_SUCCESSFULLY: 'Bookmark deleted successfully',
   BOOKMARK_NOT_FOUND: 'Bookmark not found'
-}
+} as const
 
 export const likeMessages = {
   LIKE_CREATED_SUCCESSFULLY: 'Like created successfully',
   LIKE_DELETED_SUCCESSFULLY: 'Like deleted successfully',
   LIKE_NOT_FOUND: 'Like not found'
-}
+} as const
