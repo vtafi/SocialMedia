@@ -1,0 +1,20 @@
+import { Request, Response } from 'express'
+import { ParamsDictionary } from 'express-serve-static-core'
+import { tweetMessages } from '~/constants/messages'
+import { SearchQuery } from '~/models/requests/search.requests'
+import SearchService from '~/services/search.service'
+
+export const searchController = async (req: Request<ParamsDictionary, any, any, SearchQuery>, res: Response) => {
+  const limit = Number(req.query.limit)
+  const page = Number(req.query.page)
+  const result = await SearchService.search({
+    limit,
+    page,
+    content: req.query.content as string,
+    user_id: req.decoded_authorization?.user_id as string
+  })
+  return res.json({
+    message: tweetMessages.TWEET_SEARCH_SUCCESSFULLY,
+    result: result
+  })
+}

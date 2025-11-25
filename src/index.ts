@@ -10,6 +10,7 @@ import cors from 'cors'
 import tweetRouter from './routes/tweet.routes'
 import bookmarkRouter from './routes/bookmark.routes'
 import likeRouter from './routes/like.routes'
+import searchRouter from './routes/search.routes'
 // import './utils/faker'
 config()
 const app = express()
@@ -24,6 +25,7 @@ app.use('/static', staticRouter)
 app.use('/tweets', tweetRouter)
 app.use('/bookmarks', bookmarkRouter)
 app.use('/likes', likeRouter)
+app.use('/search', searchRouter)
 connectDB()
 app.use(defaultErrorHandler)
 

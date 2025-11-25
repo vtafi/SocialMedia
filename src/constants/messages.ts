@@ -120,7 +120,8 @@ export const tweetMessages = {
   MAX_LIMIT_IS_100: 'Max limit is 100',
   MIN_LIMIT_IS_1: 'Min limit is 1',
   MIN_PAGE_IS_1: 'Min page is 1',
-  TWEET_NEW_FEEDS_SUCCESSFULLY: 'Get new feeds successfully'
+  TWEET_NEW_FEEDS_SUCCESSFULLY: 'Get new feeds successfully',
+  TWEET_SEARCH_SUCCESSFULLY: 'Search tweet successfully'
 } as const
 
 export const bookmarkMessages = {
