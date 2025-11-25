@@ -325,24 +325,70 @@ export const TweetService = {
       total
     }
   },
-  async getNewFeeds(user_id: string, limit: number, page: number) {
-    const user_id_object = new ObjectId(user_id)
-    const followed_user_ids = await FollowersModel.find(
-      { user_id: user_id_object },
-      { followed_user_id: 1, _id: 0 } // Chỉ lấy field này, mặc định MongoDB sẽ TỰ ĐỘNG lấy thêm _id
-    )
-    const ids = followed_user_ids.map((followed_user_id) => followed_user_id.followed_user_id)
-    const tweets = await TweetModel.aggregate([
-      // -------------------------------------------------------
-      // GIAI ĐOẠN 1: LỌC BÀI VIẾT CƠ BẢN & CHECK QUYỀN
-      // -------------------------------------------------------
-      {
-        $match: {
-          user_id: {
-            $in: ids // List ID tác giả bài viết
-          }
+  async getNewFeeds(user_id: string | undefined, limit: number, page: number) {
+    let ids: any[] = []
+    // Tạo ObjectId an toàn: Nếu có user_id thì tạo, không thì null
+    const user_id_object = user_id ? new ObjectId(user_id) : null
+
+    // -------------------------------------------------------
+    // GIAI ĐOẠN 1: CHUẨN BỊ DANH SÁCH TÁC GIẢ (Chỉ dành cho User đã login)
+    // -------------------------------------------------------
+    if (user_id_object) {
+      // 1. Lấy danh sách ID những người mình đã follow
+      const followed_user_ids = await FollowersModel.find(
+        { user_id: user_id_object },
+        { followed_user_id: 1, _id: 0 }
+      )
+
+      ids = followed_user_ids.map((item) => item.followed_user_id)
+
+      // [QUAN TRỌNG] Thêm ID của chính mình vào danh sách để thấy bài của mình trên Newsfeed
+      // Sử dụng 'as any' để tránh lỗi TypeScript xung đột kiểu ObjectId của Mongoose và MongoDB
+      ids.push(user_id_object as any)
+    }
+
+    // -------------------------------------------------------
+    // GIAI ĐOẠN 2: THIẾT LẬP PIPELINE (User vs Guest)
+    // -------------------------------------------------------
+
+    // A. Lọc theo Tác giả
+    // - Nếu là User: Chỉ xem bài của list `ids` (Follow + Bản thân)
+    // - Nếu là Guest: `ids` rỗng -> Xem bài toàn hệ thống (hoặc bạn có thể custom logic khác)
+    const matchAuthorStage = user_id_object
+      ? { user_id: { $in: ids } }
+      : {} // Guest: Không lọc tác giả
+
+    // B. Lọc theo Quyền xem (Audience)
+    const matchAudienceStage = user_id_object
+      ? {
+          $or: [
+            // User xem được bài công khai
+            { audience: TweetAudience.Everyone },
+            // User xem được bài Circle nếu thỏa mãn điều kiện
+            {
+              $and: [
+                { audience: TweetAudience.TweetCircle },
+                {
+                  $or: [
+                    // Người xem nằm trong circle của tác giả
+                    { 'user.twitter_circle': { $in: [user_id_object] } },
+                    // Hoặc người xem CHÍNH LÀ tác giả
+                    { 'user._id': user_id_object }
+                  ]
+                }
+              ]
+            }
+          ]
         }
-      },
+      : { audience: TweetAudience.Everyone } // Guest: CHỈ xem được bài công khai
+
+    // -------------------------------------------------------
+    // GIAI ĐOẠN 3: AGGREGATION PIPELINE
+    // -------------------------------------------------------
+    const [result] = await TweetModel.aggregate([
+      // 1. Lọc tác giả
+      { $match: matchAuthorStage },
+      // 2. Lookup User để lấy thông tin check quyền Circle
       {
         $lookup: {
           from: 'users',
@@ -351,246 +397,151 @@ export const TweetService = {
           as: 'user'
         }
       },
+      { $unwind: { path: '$user' } },
+      // 3. Lọc quyền xem (Audience)
+      { $match: matchAudienceStage },
+      // 4. Sắp xếp: Mới nhất lên đầu
+      { $sort: { created_at: -1 } },
+      
+      // 5. Facet: Chia luồng lấy Data và đếm Total
       {
-        $unwind: {
-          path: '$user'
-        }
-      },
-      {
-        $match: {
-          $or: [
+        $facet: {
+          tweets: [
+            { $skip: limit * (page - 1) },
+            { $limit: limit },
+            
+            // --- POPULATE START ---
             {
-              audience: TweetAudience.Everyone
+              $lookup: {
+                from: 'hashtags',
+                localField: 'hashtags',
+                foreignField: '_id',
+                as: 'hashtags'
+              }
             },
             {
-              $and: [
-                {
-                  audience: TweetAudience.TweetCircle
-                },
-                {
-                  'user.twitter_circle': {
-                    $in: [user_id_object] // Check xem người xem có trong circle không
-                  }
-                }
-              ]
-            }
-          ]
-        }
-      },
-
-      // -------------------------------------------------------
-      // GIAI ĐOẠN 2: SẮP XẾP VÀ PHÂN TRANG (TỐI ƯU HIỆU SUẤT TẠI ĐÂY)
-      // Chỉ lấy ra đúng 10 bài cần thiết trước khi join dữ liệu nặng
-      // -------------------------------------------------------
-      {
-        $sort: {
-          created_at: -1 // Bài mới nhất lên đầu
-        }
-      },
-      {
-        $skip: limit * (page - 1)
-      },
-      {
-        $limit: limit
-      },
-
-      // -------------------------------------------------------
-      // GIAI ĐOẠN 3: POPULATE DỮ LIỆU LIÊN QUAN (LOOKUP)
-      // Chỉ chạy cho số ít bài viết đã limit ở trên
-      // -------------------------------------------------------
-
-      // 1. Hashtags
-      {
-        $lookup: {
-          from: 'hashtags',
-          localField: 'hashtags',
-          foreignField: '_id',
-          as: 'hashtags'
-        }
-      },
-
-      // 2. Mentions (Tối ưu: Chỉ select fields cần thiết ngay trong lookup)
-      {
-        $lookup: {
-          from: 'users',
-          let: { mentions_ids: '$mentions' },
-          pipeline: [
+              $lookup: {
+                from: 'users',
+                let: { mentions_ids: '$mentions' },
+                pipeline: [
+                  { $match: { $expr: { $in: ['$_id', '$$mentions_ids'] } } },
+                  { $project: { name: 1, username: 1, email: 1, _id: 1 } }
+                ],
+                as: 'mentions'
+              }
+            },
             {
-              $match: {
-                $expr: { $in: ['$_id', '$$mentions_ids'] }
+              $lookup: {
+                from: 'bookmarks',
+                let: { tweet_id: '$_id' },
+                pipeline: [
+                  { $match: { $expr: { $eq: ['$tweet_id', '$$tweet_id'] } } },
+                  { $project: { _id: 1 } }
+                ],
+                as: 'bookmarks'
+              }
+            },
+            {
+              $lookup: {
+                from: 'likes',
+                let: { tweet_id: '$_id' },
+                pipeline: [
+                  { $match: { $expr: { $eq: ['$tweet_id', '$$tweet_id'] } } },
+                  { $project: { _id: 1 } }
+                ],
+                as: 'likes'
+              }
+            },
+            {
+              $lookup: {
+                from: 'tweets',
+                let: { tweet_id: '$_id' },
+                pipeline: [
+                  { $match: { $expr: { $eq: ['$parent_id', '$$tweet_id'] } } },
+                  { $project: { type: 1 } }
+                ],
+                as: 'tweet_children'
+              }
+            },
+            // --- POPULATE END ---
+            
+            {
+              $addFields: {
+                bookmarks: { $size: '$bookmarks' },
+                likes: { $size: '$likes' },
+                retweet_count: {
+                  $size: {
+                    $filter: {
+                      input: '$tweet_children',
+                      as: 'item',
+                      cond: { $eq: ['$$item.type', TweetType.ReTweet] }
+                    }
+                  }
+                },
+                comment_count: {
+                  $size: {
+                    $filter: {
+                      input: '$tweet_children',
+                      as: 'item',
+                      cond: { $eq: ['$$item.type', TweetType.Comment] }
+                    }
+                  }
+                },
+                quote_count: {
+                  $size: {
+                    $filter: {
+                      input: '$tweet_children',
+                      as: 'item',
+                      cond: { $eq: ['$$item.type', TweetType.QuoteTweet] }
+                    }
+                  }
+                },
+                // Views = User views + Guest views + 1 (cái view hiện tại)
+                views: {
+                  $add: ['$user_views', '$guest_views', 1]
+                }
               }
             },
             {
               $project: {
-                name: 1,
-                username: 1,
-                email: 1,
-                _id: 1
+                tweet_children: 0,
+                user: {
+                  password: 0,
+                  email_verify_token: 0,
+                  forgot_password_token: 0,
+                  twitter_circle: 0,
+                  date_of_birth: 0
+                }
               }
             }
           ],
-          as: 'mentions'
-        }
-      },
-
-      // 3. Bookmarks (Để đếm)
-      {
-        $lookup: {
-          from: 'bookmarks',
-          localField: '_id',
-          foreignField: 'tweet_id',
-          as: 'bookmarks'
-        }
-      },
-
-      // 4. Likes (Để đếm)
-      {
-        $lookup: {
-          from: 'likes',
-          localField: '_id',
-          foreignField: 'tweet_id',
-          as: 'likes'
-        }
-      },
-
-      // 5. Children Tweets (Để đếm Retweet, Comment, Quote)
-      {
-        $lookup: {
-          from: 'tweets',
-          localField: '_id',
-          foreignField: 'parent_id',
-          as: 'tweet_children'
-        }
-      },
-
-      // -------------------------------------------------------
-      // GIAI ĐOẠN 4: TÍNH TOÁN (COUNT) VÀ FORMAT DỮ LIỆU ĐẦU RA
-      // -------------------------------------------------------
-      {
-        $addFields: {
-          bookmarks: {
-            $size: '$bookmarks'
-          },
-          likes: {
-            $size: '$likes'
-          },
-          retweet_count: {
-            $size: {
-              $filter: {
-                input: '$tweet_children',
-                as: 'item',
-                cond: {
-                  $eq: ['$$item.type', TweetType.ReTweet]
-                }
-              }
-            }
-          },
-          comment_count: {
-            $size: {
-              $filter: {
-                input: '$tweet_children',
-                as: 'item',
-                cond: {
-                  $eq: ['$$item.type', TweetType.Comment]
-                }
-              }
-            }
-          },
-          quote_count: {
-            $size: {
-              $filter: {
-                input: '$tweet_children',
-                as: 'item',
-                cond: {
-                  $eq: ['$$item.type', TweetType.QuoteTweet]
-                }
-              }
-            }
-          },
-          views: {
-            $add: ['$user_views', '$guest_views']
-          }
-        }
-      },
-      {
-        $project: {
-          tweet_children: 0, // Bỏ mảng này đi cho nhẹ response
-          user: {
-            password: 0,
-            email_verify_token: 0,
-            forgot_password_token: 0,
-            twitter_circle: 0,
-            date_of_birth: 0
-          }
+          total: [{ $count: 'count' }]
         }
       }
     ])
-    const tweet_ids = tweets.map((tweet) => tweet._id as typeof ObjectId)
-    const [, total] = await Promise.all([
-      TweetModel.updateMany({ _id: { $in: tweet_ids } }, { $inc: { user_views: 1 }, $set: { updated_at: new Date() } }),
-      TweetModel.aggregate([
-        {
-          $match: {
-            user_id: {
-              $in: ids // List ID tác giả bài viết
-            }
-          }
-        },
-        {
-          $lookup: {
-            from: 'users',
-            localField: 'user_id',
-            foreignField: '_id',
-            as: 'user'
-          }
-        },
-        {
-          $unwind: {
-            path: '$user'
-          }
-        },
-        {
-          $match: {
-            $or: [
-              {
-                audience: TweetAudience.Everyone
-              },
-              {
-                $and: [
-                  {
-                    audience: TweetAudience.TweetCircle
-                  },
-                  {
-                    'user.twitter_circle': {
-                      $in: [user_id_object] // Check xem người xem có trong circle không
-                    }
-                  }
-                ]
-              }
-            ]
-          }
-        },
 
-        // -------------------------------------------------------
-        // GIAI ĐOẠN 2: SẮP XẾP VÀ PHÂN TRANG (TỐI ƯU HIỆU SUẤT TẠI ĐÂY)
-        // Chỉ lấy ra đúng 10 bài cần thiết trước khi join dữ liệu nặng
-        // -------------------------------------------------------
+    // -------------------------------------------------------
+    // GIAI ĐOẠN 4: XỬ LÝ KẾT QUẢ & VIEW
+    // -------------------------------------------------------
+    const tweets = result.tweets || []
+    const total = result.total[0]?.count || 0
+
+    // Tăng View (Chạy ngầm - Fire and Forget)
+    if (tweets.length > 0) {
+      const tweet_ids = tweets.map((tweet: any) => tweet._id)
+      
+      // Nếu có user_id -> Tăng user_views, Ngược lại -> Tăng guest_views
+      const incField = user_id_object ? { user_views: 1 } : { guest_views: 1 }
+
+      TweetModel.updateMany(
+        { _id: { $in: tweet_ids } },
         {
-          $sort: {
-            created_at: -1 // Bài mới nhất lên đầu
-          }
-        },
-        {
-          $count: 'total'
+          $inc: incField,
+          // $set: { updated_at: new Date() } // <-- TUYỆT ĐỐI KHÔNG BỎ COMMENT DÒNG NÀY
         }
-      ])
-    ])
-    tweets.forEach((tweet) => {
-      tweet.updated_at = new Date()
-      if (user_id) {
-        tweet.user_views = tweet.user_views + 1
-      }
-    })
+      ).catch((err) => console.log('Update views error:', err))
+    }
+
     return {
       tweets,
       total

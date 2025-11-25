@@ -50,4 +50,5 @@ export interface FollowUserRequestBody {
 
 export interface UnfollowRequestParams {
   followed_user_id: string
+  [key: string]: string
 }

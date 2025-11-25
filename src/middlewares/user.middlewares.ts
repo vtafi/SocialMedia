@@ -15,6 +15,7 @@ import { TokenPayload } from '~/models/requests/user.requests'
 import mongoose from 'mongoose'
 import { REGEX_USERNAME } from '~/constants/regex'
 
+const { ObjectId } = mongoose.Types
 const passwordSchema: ParamSchema = {
   notEmpty: true,
   isString: true,
@@ -483,22 +484,47 @@ export const followUserValidator = validate(
   checkSchema(
     {
       followed_user_id: {
+        // 1. Check có gửi lên không trước
+        notEmpty: {
+          errorMessage: userMessages.FOLLOWED_USER_ID_REQUIRED
+        },
+        // 2. Check có phải string không
+        isString: {
+          errorMessage: userMessages.FOLLOWED_USER_ID_MUST_BE_STRING
+        },
+        // 3. Check format ObjectId
         custom: {
-          options: (value, { req }) => {
-            if (!mongoose.Types.ObjectId.isValid(value)) {
+          options: async (value, { req }) => {
+            // Check format
+            if (!ObjectId.isValid(value)) {
               throw new ErrorWithStatus({
                 message: userMessages.FOLLOWED_USER_ID_MUST_BE_VALID_OBJECT_ID,
                 status: httpStatus.UNPROCESSABLE_ENTITY
               })
             }
+
+            // 4. Check logic: Không được follow chính mình
+            // (Giả sử bạn đã decode token và gắn user_id vào req.decoded_authorization)
+            const { user_id } = req.decoded_authorization
+            if (value === user_id) {
+               throw new ErrorWithStatus({
+                message: 'Cannot follow yourself', // Nên đưa vào file messages
+                status: httpStatus.UNPROCESSABLE_ENTITY
+              })
+            }
+
+            // 5. Check logic: User được follow có tồn tại trong DB không
+            const followedUser = await UserModel.findById(value)
+            console.log(followedUser)
+            if (!followedUser) {
+              throw new ErrorWithStatus({
+                message: userMessages.USER_NOT_FOUND,
+                status: httpStatus.NOT_FOUND
+              })
+            }
+
             return true
           }
-        },
-        notEmpty: {
-          errorMessage: userMessages.FOLLOWED_USER_ID_REQUIRED
-        },
-        isString: {
-          errorMessage: userMessages.FOLLOWED_USER_ID_MUST_BE_STRING
         }
       }
     },

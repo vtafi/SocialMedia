@@ -53,12 +53,22 @@ export const getNewFeedsController = async (
   req: Request<ParamsDictionary, any, any, PaginationQuery>,
   res: Response
 ) => {
-  const user_id = req.decoded_authorization?.user_id as string
+  // 1. Bỏ 'as string'. Lúc này user_id sẽ có kiểu: string | undefined
+  const user_id = req.decoded_authorization?.user_id 
+  
   const limit = Number(req.query.limit)
   const page = Number(req.query.page)
+
+  // 2. Truyền vào Service (Service cần nhận: string | undefined)
   const result = await TweetService.getNewFeeds(user_id, limit, page)
+
   return res.json({
     message: tweetMessages.TWEET_NEW_FEEDS_SUCCESSFULLY,
-    result: {}
+    result: {
+      tweets: result.tweets,
+      limit,
+      page,
+      total_pages: Math.ceil(result.total / limit)
+    }
   })
 }
