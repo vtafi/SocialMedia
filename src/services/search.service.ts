@@ -1,22 +1,15 @@
+import { SearchQuery } from '~/models/requests/search.requests'
 import TweetModel from '~/models/tweet.model'
+const ObjectId = mongoose.Types.ObjectId
 import mongoose from 'mongoose'
-import { TweetType } from '~/constants/enum'
+import { TweetAudience, TweetType } from '~/constants/enum'
 
 const SearchService = {
-  async search({
-    limit,
-    page,
-    content,
-    user_id
-  }: {
-    limit: number
-    page: number
-    content: string
-    user_id?: string
-  }): Promise<any[]> {
+  async search({ limit, page, content, user_id }: { limit: number; page: number; content: string; user_id: string }) {
+    const user_id_object = new ObjectId(user_id)
     const result = await TweetModel.aggregate([
       // -------------------------------------------------------
-      // GIAI ĐOẠN 1: TÌM KIẾM TEXT & LỌC QUYỀN (Audience)
+      // GIAI ĐOẠN 1: TÌM KIẾM TEXT & LỌC QUYỀN (QUAN TRỌNG NHẤT)
       // -------------------------------------------------------
       {
         $match: {
@@ -25,7 +18,7 @@ const SearchService = {
           }
         }
       },
-      // Lookup User để check quyền xem (Bắt buộc phải làm ở đây)
+      // Lookup User để lấy thông tin audience (Circle, ID)
       {
         $lookup: {
           from: 'users',
@@ -39,58 +32,48 @@ const SearchService = {
           path: '$user'
         }
       },
+      // Lọc theo quyền xem (Logic đã fix đầy đủ)
       {
         $match: {
           $or: [
+            // 1. Bài viết công khai
             {
-              audience: 0 // Everyone
+              audience: TweetAudience.Everyone // 0
             },
-            ...(user_id
-              ? [
-                  {
-                    $and: [
-                      {
-                        audience: 1 // Twitter Circle
-                      },
-                      {
-                        'user.twitter_circle': {
-                          $in: [new mongoose.Types.ObjectId(user_id)]
-                        }
-                      }
-                    ]
+            // 2. Bài viết Circle VÀ User nằm trong Circle
+            {
+              $and: [
+                {
+                  audience: TweetAudience.TweetCircle // 1
+                },
+                {
+                  'user.twitter_circle': {
+                    $in: [user_id_object]
                   }
-                ]
-              : [])
+                }
+              ]
+            },
+            // 3. (FIX) Bài viết của CHÍNH MÌNH (Tác giả luôn xem được bài của mình)
+            {
+              'user._id': user_id_object
+            }
           ]
         }
       },
 
       // -------------------------------------------------------
       // GIAI ĐOẠN 2: PHÂN TRANG (PAGINATION)
-      // Di chuyển xuống ngay đây để giảm tải tính toán
+      // Đặt ở đây để cắt giảm dữ liệu TRƯỚC khi join các bảng nặng
       // -------------------------------------------------------
-
-      // Thêm score từ textScore để sort
       {
-        $addFields: {
-          score: { $meta: 'textScore' }
-        }
-      },
-
-      // Sort theo độ liên quan (textScore) và ngày tạo mới nhất
-      {
-        $sort: { score: -1, created_at: -1 }
-      },
-
-      {
-        $skip: limit * (page - 1) // Vị trí cũ: limit * (page - 1)
+        $skip: limit * (page - 1)
       },
       {
-        $limit: limit // Vị trí cũ: limit
+        $limit: limit
       },
 
       // -------------------------------------------------------
-      // GIAI ĐOẠN 3: POPULATE DỮ LIỆU (CHỈ CHẠY CHO 2 ITEMS ĐÃ LIMIT)
+      // GIAI ĐOẠN 3: POPULATE DỮ LIỆU (CHỈ CHẠY CHO SỐ LƯỢNG ĐÃ LIMIT)
       // -------------------------------------------------------
 
       // 1. Hashtags
@@ -103,14 +86,14 @@ const SearchService = {
         }
       },
 
-      // 2. Mentions (Tối ưu: Chỉ lấy name/username/email)
+      // 2. Mentions (Tối ưu: Chỉ select field cần thiết để bảo mật & nhẹ)
       {
         $lookup: {
           from: 'users',
           let: { mentions_ids: '$mentions' },
           pipeline: [
             { $match: { $expr: { $in: ['$_id', '$$mentions_ids'] } } },
-            { $project: { name: 1, username: 1, email: 1, _id: 1 } }
+            { $project: { name: 1, username: 1, email: 1, _id: 1 } } // Chỉ lấy thông tin public
           ],
           as: 'mentions'
         }
@@ -136,7 +119,7 @@ const SearchService = {
         }
       },
 
-      // 5. Tweet Children (Tối ưu: Chỉ lấy field 'type' để phân loại)
+      // 5. Tweet Children (Tối ưu: Chỉ lấy field 'type' để phân loại đếm)
       {
         $lookup: {
           from: 'tweets',
@@ -147,7 +130,7 @@ const SearchService = {
       },
 
       // -------------------------------------------------------
-      // GIAI ĐOẠN 4: FORMAT DỮ LIỆU
+      // GIAI ĐOẠN 4: FORMAT DỮ LIỆU ĐẦU RA
       // -------------------------------------------------------
       {
         $addFields: {
@@ -158,7 +141,7 @@ const SearchService = {
               $filter: {
                 input: '$tweet_children',
                 as: 'item',
-                cond: { $eq: ['$$item.type', TweetType.ReTweet] } // TweetType.ReTweet
+                cond: { $eq: ['$$item.type', TweetType.ReTweet] } // type: 1
               }
             }
           },
@@ -167,7 +150,7 @@ const SearchService = {
               $filter: {
                 input: '$tweet_children',
                 as: 'item',
-                cond: { $eq: ['$$item.type', TweetType.Comment] } // TweetType.Comment
+                cond: { $eq: ['$$item.type', TweetType.Comment] } // type: 2
               }
             }
           },
@@ -176,12 +159,13 @@ const SearchService = {
               $filter: {
                 input: '$tweet_children',
                 as: 'item',
-                cond: { $eq: ['$$item.type', TweetType.QuoteTweet] } // TweetType.QuoteTweet
+                cond: { $eq: ['$$item.type', TweetType.QuoteTweet] } // type: 3
               }
             }
           }
         }
       },
+      // Clean up: Ẩn các trường không cần thiết hoặc nhạy cảm
       {
         $project: {
           tweet_children: 0,

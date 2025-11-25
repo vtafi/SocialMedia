@@ -59,6 +59,6 @@ export const getNewFeedsController = async (
   const result = await TweetService.getNewFeeds(user_id, limit, page)
   return res.json({
     message: tweetMessages.TWEET_NEW_FEEDS_SUCCESSFULLY,
-    result: result
+    result: {}
   })
 }

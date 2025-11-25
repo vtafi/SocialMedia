@@ -1,5 +1,5 @@
-import { Request, Response } from 'express'
 import { ParamsDictionary } from 'express-serve-static-core'
+import { Request, Response } from 'express'
 import { tweetMessages } from '~/constants/messages'
 import { SearchQuery } from '~/models/requests/search.requests'
 import SearchService from '~/services/search.service'
@@ -15,6 +15,9 @@ export const searchController = async (req: Request<ParamsDictionary, any, any, 
   })
   return res.json({
     message: tweetMessages.TWEET_SEARCH_SUCCESSFULLY,
-    result: result
+    result: {
+      ...result,
+      total_pages: Math.ceil(result.length / limit)
+    }
   })
 }

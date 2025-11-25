@@ -525,6 +525,75 @@ export const TweetService = {
         }
       }
     ])
-    return tweets
+    const tweet_ids = tweets.map((tweet) => tweet._id as typeof ObjectId)
+    const [, total] = await Promise.all([
+      TweetModel.updateMany({ _id: { $in: tweet_ids } }, { $inc: { user_views: 1 }, $set: { updated_at: new Date() } }),
+      TweetModel.aggregate([
+        {
+          $match: {
+            user_id: {
+              $in: ids // List ID tác giả bài viết
+            }
+          }
+        },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'user_id',
+            foreignField: '_id',
+            as: 'user'
+          }
+        },
+        {
+          $unwind: {
+            path: '$user'
+          }
+        },
+        {
+          $match: {
+            $or: [
+              {
+                audience: TweetAudience.Everyone
+              },
+              {
+                $and: [
+                  {
+                    audience: TweetAudience.TweetCircle
+                  },
+                  {
+                    'user.twitter_circle': {
+                      $in: [user_id_object] // Check xem người xem có trong circle không
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        },
+
+        // -------------------------------------------------------
+        // GIAI ĐOẠN 2: SẮP XẾP VÀ PHÂN TRANG (TỐI ƯU HIỆU SUẤT TẠI ĐÂY)
+        // Chỉ lấy ra đúng 10 bài cần thiết trước khi join dữ liệu nặng
+        // -------------------------------------------------------
+        {
+          $sort: {
+            created_at: -1 // Bài mới nhất lên đầu
+          }
+        },
+        {
+          $count: 'total'
+        }
+      ])
+    ])
+    tweets.forEach((tweet) => {
+      tweet.updated_at = new Date()
+      if (user_id) {
+        tweet.user_views = tweet.user_views + 1
+      }
+    })
+    return {
+      tweets,
+      total
+    }
   }
 }
