@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { searchController } from '~/controllers/search.controller'
-import { accessTokenValidator, verifyUserValidator } from '~/middlewares/user.middlewares'
+import { accessTokenValidator, isUserLoggedInValidator, verifyUserValidator } from '~/middlewares/user.middlewares'
 import { wrapAsync } from '~/utils/handler'
 
 const searchRouter = Router()
@@ -11,6 +11,6 @@ const searchRouter = Router()
  * Method: GET
  * Query: { query: string }
  */
-searchRouter.get('/', accessTokenValidator, verifyUserValidator, wrapAsync(searchController))
+searchRouter.get('/', isUserLoggedInValidator(accessTokenValidator), isUserLoggedInValidator(verifyUserValidator), wrapAsync(searchController))
 
 export default searchRouter

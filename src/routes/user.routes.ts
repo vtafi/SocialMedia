@@ -32,7 +32,7 @@ import {
   verifyForgotPasswordTokenValidator,
   verifyUserValidator
 } from '~/middlewares/user.middlewares'
-import { UpdateMeRequestBody } from '~/models/requests/user.requests'
+import { UnfollowRequestParams, UpdateMeRequestBody } from '~/models/requests/user.requests'
 import { wrapAsync } from '~/utils/handler'
 
 const usersRouter = Router()
@@ -175,7 +175,7 @@ usersRouter.post(
   Method: DELETE
   Headers: { Authorization: 'Bearer <access_token>' }
 */
-usersRouter.delete(
+usersRouter.delete<UnfollowRequestParams>(
   '/unfollow/:followed_user_id',
   accessTokenValidator,
   verifyUserValidator,
