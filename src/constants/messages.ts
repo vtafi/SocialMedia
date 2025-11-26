@@ -135,3 +135,9 @@ export const likeMessages = {
   LIKE_DELETED_SUCCESSFULLY: 'Like deleted successfully',
   LIKE_NOT_FOUND: 'Like not found'
 } as const
+
+export const searchMessages = {
+  CONTENT_REQUIRED: 'Content is required',
+  CONTENT_MUST_BE_STRING: 'Content must be a string',
+  MEDIA_TYPE_INVALID: 'Media type is invalid'
+} as const

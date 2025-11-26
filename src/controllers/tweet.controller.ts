@@ -54,8 +54,8 @@ export const getNewFeedsController = async (
   res: Response
 ) => {
   // 1. Bỏ 'as string'. Lúc này user_id sẽ có kiểu: string | undefined
-  const user_id = req.decoded_authorization?.user_id 
-  
+  const user_id = req.decoded_authorization?.user_id
+
   const limit = Number(req.query.limit)
   const page = Number(req.query.page)
 

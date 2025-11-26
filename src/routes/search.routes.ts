@@ -11,6 +11,11 @@ const searchRouter = Router()
  * Method: GET
  * Query: { query: string }
  */
-searchRouter.get('/', isUserLoggedInValidator(accessTokenValidator), isUserLoggedInValidator(verifyUserValidator), wrapAsync(searchController))
+searchRouter.get(
+  '/',
+  isUserLoggedInValidator(accessTokenValidator),
+  isUserLoggedInValidator(verifyUserValidator),
+  wrapAsync(searchController)
+)
 
 export default searchRouter

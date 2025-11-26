@@ -64,6 +64,11 @@ tweetRouter.get(
  * Headers: { Authorization: Bearer <access_token> }
  * Query: { limit: number, page: number }
  */
-tweetRouter.get('/', paginationValidator,isUserLoggedInValidator(accessTokenValidator),  wrapAsync(getNewFeedsController))
+tweetRouter.get(
+  '/',
+  paginationValidator,
+  isUserLoggedInValidator(accessTokenValidator),
+  wrapAsync(getNewFeedsController)
+)
 
 export default tweetRouter

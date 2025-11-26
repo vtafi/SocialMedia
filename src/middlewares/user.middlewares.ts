@@ -507,7 +507,7 @@ export const followUserValidator = validate(
             // (Giả sử bạn đã decode token và gắn user_id vào req.decoded_authorization)
             const { user_id } = req.decoded_authorization
             if (value === user_id) {
-               throw new ErrorWithStatus({
+              throw new ErrorWithStatus({
                 message: 'Cannot follow yourself', // Nên đưa vào file messages
                 status: httpStatus.UNPROCESSABLE_ENTITY
               })

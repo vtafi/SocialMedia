@@ -335,10 +335,7 @@ export const TweetService = {
     // -------------------------------------------------------
     if (user_id_object) {
       // 1. Lấy danh sách ID những người mình đã follow
-      const followed_user_ids = await FollowersModel.find(
-        { user_id: user_id_object },
-        { followed_user_id: 1, _id: 0 }
-      )
+      const followed_user_ids = await FollowersModel.find({ user_id: user_id_object }, { followed_user_id: 1, _id: 0 })
 
       ids = followed_user_ids.map((item) => item.followed_user_id)
 
@@ -354,9 +351,7 @@ export const TweetService = {
     // A. Lọc theo Tác giả
     // - Nếu là User: Chỉ xem bài của list `ids` (Follow + Bản thân)
     // - Nếu là Guest: `ids` rỗng -> Xem bài toàn hệ thống (hoặc bạn có thể custom logic khác)
-    const matchAuthorStage = user_id_object
-      ? { user_id: { $in: ids } }
-      : {} // Guest: Không lọc tác giả
+    const matchAuthorStage = user_id_object ? { user_id: { $in: ids } } : {} // Guest: Không lọc tác giả
 
     // B. Lọc theo Quyền xem (Audience)
     const matchAudienceStage = user_id_object
@@ -402,14 +397,14 @@ export const TweetService = {
       { $match: matchAudienceStage },
       // 4. Sắp xếp: Mới nhất lên đầu
       { $sort: { created_at: -1 } },
-      
+
       // 5. Facet: Chia luồng lấy Data và đếm Total
       {
         $facet: {
           tweets: [
             { $skip: limit * (page - 1) },
             { $limit: limit },
-            
+
             // --- POPULATE START ---
             {
               $lookup: {
@@ -434,10 +429,7 @@ export const TweetService = {
               $lookup: {
                 from: 'bookmarks',
                 let: { tweet_id: '$_id' },
-                pipeline: [
-                  { $match: { $expr: { $eq: ['$tweet_id', '$$tweet_id'] } } },
-                  { $project: { _id: 1 } }
-                ],
+                pipeline: [{ $match: { $expr: { $eq: ['$tweet_id', '$$tweet_id'] } } }, { $project: { _id: 1 } }],
                 as: 'bookmarks'
               }
             },
@@ -445,10 +437,7 @@ export const TweetService = {
               $lookup: {
                 from: 'likes',
                 let: { tweet_id: '$_id' },
-                pipeline: [
-                  { $match: { $expr: { $eq: ['$tweet_id', '$$tweet_id'] } } },
-                  { $project: { _id: 1 } }
-                ],
+                pipeline: [{ $match: { $expr: { $eq: ['$tweet_id', '$$tweet_id'] } } }, { $project: { _id: 1 } }],
                 as: 'likes'
               }
             },
@@ -456,15 +445,12 @@ export const TweetService = {
               $lookup: {
                 from: 'tweets',
                 let: { tweet_id: '$_id' },
-                pipeline: [
-                  { $match: { $expr: { $eq: ['$parent_id', '$$tweet_id'] } } },
-                  { $project: { type: 1 } }
-                ],
+                pipeline: [{ $match: { $expr: { $eq: ['$parent_id', '$$tweet_id'] } } }, { $project: { type: 1 } }],
                 as: 'tweet_children'
               }
             },
             // --- POPULATE END ---
-            
+
             {
               $addFields: {
                 bookmarks: { $size: '$bookmarks' },
@@ -529,14 +515,14 @@ export const TweetService = {
     // Tăng View (Chạy ngầm - Fire and Forget)
     if (tweets.length > 0) {
       const tweet_ids = tweets.map((tweet: any) => tweet._id)
-      
+
       // Nếu có user_id -> Tăng user_views, Ngược lại -> Tăng guest_views
       const incField = user_id_object ? { user_views: 1 } : { guest_views: 1 }
 
       TweetModel.updateMany(
         { _id: { $in: tweet_ids } },
         {
-          $inc: incField,
+          $inc: incField
           // $set: { updated_at: new Date() } // <-- TUYỆT ĐỐI KHÔNG BỎ COMMENT DÒNG NÀY
         }
       ).catch((err) => console.log('Update views error:', err))
