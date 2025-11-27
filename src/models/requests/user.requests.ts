@@ -5,7 +5,6 @@ export interface LoginRequestBody {
   email: string
   password: string
 }
-
 export interface RegisterRequestBody {
   name: string
   email: string
@@ -47,7 +46,6 @@ export interface UpdateMeRequestBody {
 export interface FollowUserRequestBody {
   followed_user_id: string
 }
-
 export interface UnfollowRequestParams {
   followed_user_id: string
   [key: string]: string

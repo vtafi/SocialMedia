@@ -62,7 +62,6 @@ export const MediaService = {
     )
     return results
   },
-
   async uploadVideo(req: Request) {
     const { files } = await handleUploadVideo(req)
     const newName = files[0].newFilename

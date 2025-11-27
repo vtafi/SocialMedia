@@ -11,10 +11,18 @@ import tweetRouter from './routes/tweet.routes'
 import bookmarkRouter from './routes/bookmark.routes'
 import likeRouter from './routes/like.routes'
 import searchRouter from './routes/search.routes'
+import { createServer } from 'node:http'
+import { Server } from 'socket.io'
 // import './utils/faker'
 config()
 const app = express()
 const PORT = process.env.PORT || 8386
+const httpServer = createServer(app)
+const io = new Server(httpServer, {
+  cors: {
+    origin: 'http://localhost:5173'
+  }
+})
 
 initFolder()
 app.use(cors())
@@ -29,4 +37,10 @@ app.use('/search', searchRouter)
 connectDB()
 app.use(defaultErrorHandler)
 
-app.listen(PORT)
+io.on('connection', (socket) => {
+  console.log(`User connected: ${socket.id}`)
+  socket.on('disconnect', () => {
+    console.log(`User disconnected: ${socket.id}`)
+  })
+})
+httpServer.listen(PORT)

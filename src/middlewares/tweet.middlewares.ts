@@ -61,7 +61,6 @@ export const createTweetValidator = validate(
             if (type === TweetType.ReTweet && value !== '') {
               throw new Error(tweetMessages.CONTENT_MUST_BE_EMPTY)
             }
-
             return true
           }
         }
