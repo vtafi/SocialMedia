@@ -15,6 +15,7 @@ import { createServer } from 'node:http'
 import { Server } from 'socket.io'
 import chatRouter from './routes/chat.routes'
 import { initializeSocket } from './utils/socket'
+import './utils/s3'
 
 config()
 const app = express()

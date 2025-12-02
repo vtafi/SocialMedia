@@ -4,7 +4,6 @@ import Message from '~/models/schemas/message.schema'
 import UserModel from '~/models/user.model'
 
 const ObjectId = Schema.Types.ObjectId
-
 export const ChatService = {
   // Tạo hoặc lấy conversation giữa 2 users
   async getOrCreateConversation(user1Id: string, user2Id: string) {
@@ -17,8 +16,8 @@ export const ChatService = {
     if (!conversation) {
       // Lấy thông tin users
       const [user1, user2] = await Promise.all([
-        UserModel.findById(user1Id).select('name avatar role'),
-        UserModel.findById(user2Id).select('name avatar role')
+        UserModel.findById(user1Id).select('name avatar'),
+        UserModel.findById(user2Id).select('name avatar')
       ])
 
       if (!user1 || !user2) {
@@ -70,34 +69,10 @@ export const ChatService = {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .populate('senderId', 'name avatar role')
+      .populate('senderId', 'full_name avatar role')
       .lean()
 
     return messages.reverse() // Reverse to get oldest first
-  },
-
-  // Tạo message mới (dùng cho REST API nếu cần)
-  async createMessage(conversationId: string, senderId: string, content: string, messageType = 'text') {
-    const message = await Message.create({
-      conversationId: new ObjectId(conversationId),
-      senderId: new ObjectId(senderId),
-      content,
-      messageType,
-      isRead: false
-    })
-
-    // Update conversation's lastMessage
-    await Conversation.findByIdAndUpdate(conversationId, {
-      lastMessage: {
-        content,
-        senderId: new ObjectId(senderId),
-        createdAt: message.createdAt
-      },
-      updatedAt: new Date()
-    })
-
-    await message.populate('senderId', 'name avatar role')
-    return message
   },
 
   // Đánh dấu messages là đã đọc
@@ -134,10 +109,13 @@ export const ChatService = {
     }
 
     if (searchTerm) {
-      query.$or = [{ name: { $regex: searchTerm, $options: 'i' } }, { email: { $regex: searchTerm, $options: 'i' } }]
+      query.$or = [
+        { full_name: { $regex: searchTerm, $options: 'i' } },
+        { email: { $regex: searchTerm, $options: 'i' } }
+      ]
     }
 
-    const users = await UserModel.find(query).select('name email avatar role').limit(20).lean()
+    const users = await UserModel.find(query).select('full_name email avatar role').limit(20).lean()
 
     return users
   },
