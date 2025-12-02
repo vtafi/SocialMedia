@@ -12,7 +12,6 @@ export const likeTweetController = async (req: Request<ParamsDictionary, any, Li
     result: result
   })
 }
-
 export const unLikeTweetController = async (req: Request, res: Response) => {
   const { tweet_id } = req.params
   const { user_id } = req.decoded_authorization as TokenPayload

@@ -13,7 +13,9 @@ import likeRouter from './routes/like.routes'
 import searchRouter from './routes/search.routes'
 import { createServer } from 'node:http'
 import { Server } from 'socket.io'
-// import './utils/faker'
+import chatRouter from './routes/chat.routes'
+import { initializeSocket } from './utils/socket'
+
 config()
 const app = express()
 const PORT = process.env.PORT || 8386
@@ -34,13 +36,12 @@ app.use('/tweets', tweetRouter)
 app.use('/bookmarks', bookmarkRouter)
 app.use('/likes', likeRouter)
 app.use('/search', searchRouter)
+app.use('/chat', chatRouter)
 connectDB()
 app.use(defaultErrorHandler)
 
-io.on('connection', (socket) => {
-  console.log(`User connected: ${socket.id}`)
-  socket.on('disconnect', () => {
-    console.log(`User disconnected: ${socket.id}`)
-  })
+initializeSocket(httpServer)
+
+httpServer.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`)
 })
-httpServer.listen(PORT)

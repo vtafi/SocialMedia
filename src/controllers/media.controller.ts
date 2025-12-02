@@ -14,7 +14,6 @@ export const uploadImageController = async (req: Request, res: Response, next: N
     result: url
   })
 }
-
 export const uploadVideoController = async (req: Request, res: Response, next: NextFunction) => {
   const url = await MediaService.uploadVideo(req)
   return res.json({
@@ -22,7 +21,6 @@ export const uploadVideoController = async (req: Request, res: Response, next: N
     result: url
   })
 }
-
 export const uploadVideoHLSController = async (req: Request, res: Response, next: NextFunction) => {
   const url = await MediaService.uploadVideoHLS(req)
   return res.json({
@@ -40,7 +38,6 @@ export const serveImageController = (req: Request, res: Response, next: NextFunc
     }
   })
 }
-
 export const serveVideoStreamController = (req: Request, res: Response, next: NextFunction) => {
   const range = req.headers.range
   const { name } = req.params
@@ -83,7 +80,6 @@ export const serveVideoStreamController = (req: Request, res: Response, next: Ne
   const videoStream = fs.createReadStream(videoPath, { start, end })
   videoStream.pipe(res)
 }
-
 export const serveM3U8Controller = (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params
   return res.sendFile(path.resolve(UPLOAD_VIDEO_DIR, id, 'master.m3u8'), (err) => {
@@ -94,7 +90,6 @@ export const serveM3U8Controller = (req: Request, res: Response, next: NextFunct
     }
   })
 }
-
 export const serveSegmentController = (req: Request, res: Response, next: NextFunction) => {
   const { id, v, segment } = req.params
   return res.sendFile(path.resolve(UPLOAD_VIDEO_DIR, id, v, segment), (err) => {

@@ -377,7 +377,6 @@ export const TweetService = {
         }
       : { audience: TweetAudience.Everyone } // Guest: CHỈ xem được bài công khai
 
-    // -------------------------------------------------------
     // GIAI ĐOẠN 3: AGGREGATION PIPELINE
     // -------------------------------------------------------
     const [result] = await TweetModel.aggregate([
@@ -506,7 +505,6 @@ export const TweetService = {
       }
     ])
 
-    // -------------------------------------------------------
     // GIAI ĐOẠN 4: XỬ LÝ KẾT QUẢ & VIEW
     // -------------------------------------------------------
     const tweets = result.tweets || []
