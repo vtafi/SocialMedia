@@ -10,6 +10,8 @@ import { MediaType } from '~/constants/enum'
 import { Media } from '~/models/other'
 import { encodeHLSWithMultipleVideoStreams } from '~/utils/video'
 import fsPromise from 'fs/promises'
+import { uploadFileToS3 } from '~/utils/s3'
+import mime from 'mime'
 config()
 class Queue {
   items: string[]
@@ -49,28 +51,45 @@ export const MediaService = {
     const results: Media[] = await Promise.all(
       file.map(async (file) => {
         const newName = getNameFromFullName(file.newFilename)
-        const newPath = path.resolve(UPLOAD_IMAGE_DIR, `${newName}.jpg`)
+        const newFullFileName = `${newName}.jpg`
+        const newPath = path.resolve(UPLOAD_IMAGE_DIR, newFullFileName)
         await sharp(file.filepath).jpeg().toFile(newPath)
-        fs.unlinkSync(file.filepath)
+        const s3Result = await uploadFileToS3({
+          filename: 'images/' + newFullFileName,
+          filepath: newPath,
+          contentType: mime.getType(newFullFileName) as string
+        })
+        await Promise.all([fsPromise.unlink(file.filepath), fsPromise.unlink(newPath)])
         return {
-          url: isProduction
-            ? `${process.env.HOST}/static/image/${newName}.jpg`
-            : `http://localhost:${process.env.PORT}/static/image/${newName}.jpg`,
+          url: s3Result.Location as string,
           type: MediaType.Image
         }
+        // return {
+        //   url: isProduction
+        //     ? `${process.env.HOST}/static/image/${newFullFileName}`
+        //     : `http://localhost:${process.env.PORT}/static/image/${newFullFileName}`,
+        //   type: MediaType.Image
+        // }
       })
     )
     return results
   },
   async uploadVideo(req: Request) {
     const { files } = await handleUploadVideo(req)
-    const newName = files[0].newFilename
-    return {
-      url: isProduction
-        ? `${process.env.HOST}/static/video-stream/${newName}`
-        : `http://localhost:${process.env.PORT}/static/video-stream/${newName}`,
-      type: MediaType.Video
-    }
+    const results: Media[] = await Promise.all(
+      files.map(async (file) => {
+        const S3Result = await uploadFileToS3({
+          filename: 'videos/' + file.newFilename,
+          filepath: file.filepath,
+          contentType: mime.getType(file.newFilename) as string
+        })
+        return {
+          url: S3Result.Location as string,
+          type: MediaType.Video
+        }
+      })
+    )
+    return results
   },
   async uploadVideoHLS(req: Request) {
     const { idName, files } = await handleUploadVideo(req)

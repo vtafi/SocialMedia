@@ -1,6 +1,7 @@
 import { S3Client, ListBucketsCommand } from '@aws-sdk/client-s3'
 import dotenv from 'dotenv'
-import {Upload} from '@aws-sdk/lib-storage'
+import { Upload } from '@aws-sdk/lib-storage'
+import fs from 'fs'
 dotenv.config()
 // Retrieve values from environment variables
 const region = process.env.AWS_REGION
@@ -19,10 +20,23 @@ const s3Client = new S3Client({
   }
 })
 // s3Client.send(new ListBucketsCommand()).then((data) => console.log(data.Buckets))
-try {
+export const uploadFileToS3 = ({
+  filename,
+  filepath,
+  contentType
+}: {
+  filename: string
+  filepath: string
+  contentType: string
+}) => {
   const parallelUploads3 = new Upload({
     client: s3Client,
-    params: { Bucket: 'twitter-nodejs-1', Key, Body },
+    params: {
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: filename,
+      Body: fs.readFileSync(filepath),
+      ContentType: contentType
+    },
 
     // optional tags
     tags: [
@@ -40,12 +54,7 @@ try {
     // (optional) when true, do not automatically call AbortMultipartUpload when
     // a multipart upload fails to complete. You should then manually handle
     // the leftover parts.
-    leavePartsOnError: false,
-  });
-
-  parallelUploads3.on("httpUploadProgress", (progress) => {
-    console.log(progress);
-  });
-
-  await parallelUploads3.done();
-
+    leavePartsOnError: false
+  })
+  return parallelUploads3.done()
+}
