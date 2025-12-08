@@ -1,0 +1,75 @@
+# Dependencies
+node_modules
+npm-debug.log
+yarn-error.log
+# package-lock.json is REQUIRED for npm ci - do NOT exclude it
+
+# Build output (will be generated during Docker build)
+dist
+
+# Environment files
+# Block local .env files to prevent accidental copying
+.env
+.env.development
+.env.local
+.env.test
+
+# Allow specific env files for Docker build
+!.env.production
+!.env.example
+!.env.email.example
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE and Editor files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+logs
+*.log
+
+# Testing
+coverage
+.nyc_output
+*.test.ts
+*.spec.ts
+
+# Temporary files
+tmp
+temp
+uploads/*
+!uploads/.gitkeep
+
+# Documentation (unless needed in production)
+README.md
+CHANGELOG.md
+LICENSE
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.travis.yml
+
+# Linting and formatting
+.eslintrc*
+.prettierrc*
+.prettierignore
+.editorconfig
+eslint.config.mts
+
+# TypeScript config - REQUIRED for build stage
+# Will not be in final image due to multi-stage build
+# tsconfig.json
+
+# Docker files
+Dockerfile
+docker-compose.yml
+.dockerignore

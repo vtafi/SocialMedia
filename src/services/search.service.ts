@@ -1,7 +1,7 @@
 import { SearchQuery } from '~/models/requests/search.requests'
 import TweetModel from '~/models/tweet.model'
-const ObjectId = mongoose.Types.ObjectId
 import mongoose from 'mongoose'
+const ObjectId = mongoose.Types.ObjectId
 import { MediaType, MediaTypeQuery, TweetAudience, TweetType } from '~/constants/enum'
 
 const SearchService = {

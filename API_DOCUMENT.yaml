@@ -1,0 +1,1509 @@
+openapi: 3.0.0
+info:
+  title: Twitter Clone API
+  description: RESTful API for Twitter-like social media platform with real-time chat, media uploads, and social interactions
+  version: 1.0.0
+  contact:
+    name: API Support
+servers:
+  - url: http://localhost:8386
+    description: Local development server
+
+tags:
+  - name: Users
+    description: User authentication and profile management
+  - name: Tweets
+    description: Tweet creation and management
+  - name: Media
+    description: Media upload operations
+  - name: Static
+    description: Static file serving
+  - name: Bookmarks
+    description: Bookmark management
+  - name: Likes
+    description: Like/unlike tweets
+  - name: Search
+    description: Search functionality
+  - name: Chat
+    description: Real-time chat and messaging
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT access token for authentication
+
+  schemas:
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: '507f1f77bcf86cd799439011'
+        name:
+          type: string
+          example: 'John Doe'
+        email:
+          type: string
+          format: email
+          example: 'john@example.com'
+        date_of_birth:
+          type: string
+          format: date-time
+          nullable: true
+        verify:
+          type: integer
+          enum: [0, 1, 2]
+          description: '0: Unverified, 1: Verified, 2: Banned'
+        bio:
+          type: string
+          example: 'Software developer'
+        location:
+          type: string
+          example: 'New York, USA'
+        website:
+          type: string
+          example: 'https://johndoe.com'
+        username:
+          type: string
+          example: 'johndoe'
+        avatar:
+          type: string
+          example: 'https://example.com/avatar.jpg'
+        cover_photo:
+          type: string
+          example: 'https://example.com/cover.jpg'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Tweet:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: '507f1f77bcf86cd799439011'
+        user_id:
+          type: string
+          example: '507f1f77bcf86cd799439011'
+        type:
+          type: integer
+          enum: [0, 1, 2, 3]
+          description: '0: Tweet, 1: ReTweet, 2: Comment, 3: QuoteTweet'
+        audience:
+          type: integer
+          enum: [0, 1, 2]
+          description: '0: Everyone, 1: TweetCircle, 2: OnlyMe'
+        content:
+          type: string
+          example: 'This is my first tweet!'
+        parent_id:
+          type: string
+          nullable: true
+          example: null
+        hashtags:
+          type: array
+          items:
+            type: string
+          example: ['507f1f77bcf86cd799439011']
+        mentions:
+          type: array
+          items:
+            type: string
+          example: ['507f1f77bcf86cd799439011']
+        medias:
+          type: array
+          items:
+            $ref: '#/components/schemas/Media'
+        guest_views:
+          type: integer
+          example: 0
+        user_views:
+          type: integer
+          example: 0
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Media:
+      type: object
+      properties:
+        url:
+          type: string
+          example: 'https://example.com/image.jpg'
+        type:
+          type: integer
+          enum: [0, 1, 2]
+          description: '0: Image, 1: Video, 2: VideoHLS'
+
+    Conversation:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: '507f1f77bcf86cd799439011'
+        participants:
+          type: array
+          items:
+            type: string
+          example: ['507f1f77bcf86cd799439011', '507f1f77bcf86cd799439012']
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Message:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: '507f1f77bcf86cd799439011'
+        conversation_id:
+          type: string
+          example: '507f1f77bcf86cd799439011'
+        sender_id:
+          type: string
+          example: '507f1f77bcf86cd799439011'
+        content:
+          type: string
+          example: 'Hello, how are you?'
+        read_by:
+          type: array
+          items:
+            type: string
+          example: ['507f1f77bcf86cd799439011']
+        created_at:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: 'Error message'
+        errors:
+          type: object
+          additionalProperties: true
+
+    SuccessResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: 'Operation successful'
+        result:
+          type: object
+          additionalProperties: true
+
+paths:
+  # ==================== USERS ENDPOINTS ====================
+  /users/login:
+    post:
+      tags:
+        - Users
+      summary: User login
+      description: Authenticate user with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: 'john@example.com'
+                password:
+                  type: string
+                  format: password
+                  example: 'Password123!'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Login successful'
+                  result:
+                    type: object
+                    properties:
+                      access_token:
+                        type: string
+                        example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+                      refresh_token:
+                        type: string
+                        example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+                      user:
+                        $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/register:
+    post:
+      tags:
+        - Users
+      summary: Register new user
+      description: Create a new user account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+                - confirmPassword
+                - date_of_birth
+              properties:
+                name:
+                  type: string
+                  example: 'John Doe'
+                email:
+                  type: string
+                  format: email
+                  example: 'john@example.com'
+                password:
+                  type: string
+                  format: password
+                  example: 'Password123!'
+                confirmPassword:
+                  type: string
+                  format: password
+                  example: 'Password123!'
+                date_of_birth:
+                  type: string
+                  format: date-time
+                  example: '1990-01-01'
+      responses:
+        '200':
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Registration successful'
+                  result:
+                    type: object
+                    properties:
+                      access_token:
+                        type: string
+                      refresh_token:
+                        type: string
+                      user:
+                        $ref: '#/components/schemas/User'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/oauth/google:
+    get:
+      tags:
+        - Users
+      summary: Google OAuth login
+      description: Authenticate user via Google OAuth
+      responses:
+        '200':
+          description: OAuth successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  result:
+                    type: object
+                    properties:
+                      access_token:
+                        type: string
+                      refresh_token:
+                        type: string
+
+  /users/logout:
+    post:
+      tags:
+        - Users
+      summary: User logout
+      description: Logout user and invalidate refresh token
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refresh_token
+              properties:
+                refresh_token:
+                  type: string
+                  example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/verify-email:
+    post:
+      tags:
+        - Users
+      summary: Verify email
+      description: Verify user email with token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email_verify_token
+              properties:
+                email_verify_token:
+                  type: string
+                  example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+      responses:
+        '200':
+          description: Email verified successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/resend-verify-email:
+    post:
+      tags:
+        - Users
+      summary: Resend verification email
+      description: Resend email verification link
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Verification email sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/forgot-password:
+    post:
+      tags:
+        - Users
+      summary: Request password reset
+      description: Send password reset email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: 'john@example.com'
+      responses:
+        '200':
+          description: Password reset email sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /users/verify-forgot-password:
+    post:
+      tags:
+        - Users
+      summary: Verify password reset token
+      description: Verify the forgot password token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - forgot_password_token
+              properties:
+                forgot_password_token:
+                  type: string
+                  example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+      responses:
+        '200':
+          description: Token verified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /users/reset-password:
+    post:
+      tags:
+        - Users
+      summary: Reset password
+      description: Reset user password with token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - forgot_password_token
+                - password
+                - confirmPassword
+              properties:
+                forgot_password_token:
+                  type: string
+                  example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+                password:
+                  type: string
+                  format: password
+                  example: 'NewPassword123!'
+                confirmPassword:
+                  type: string
+                  format: password
+                  example: 'NewPassword123!'
+      responses:
+        '200':
+          description: Password reset successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /users/refresh-token:
+    post:
+      tags:
+        - Users
+      summary: Refresh access token
+      description: Get new access token using refresh token
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refresh_token
+              properties:
+                refresh_token:
+                  type: string
+                  example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  result:
+                    type: object
+                    properties:
+                      access_token:
+                        type: string
+                      refresh_token:
+                        type: string
+
+  /users/me:
+    get:
+      tags:
+        - Users
+      summary: Get current user profile
+      description: Get authenticated user's profile
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  result:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    patch:
+      tags:
+        - Users
+      summary: Update user profile
+      description: Update current user's profile information
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: 'John Doe Updated'
+                date_of_birth:
+                  type: string
+                  format: date-time
+                bio:
+                  type: string
+                  example: 'Full-stack developer'
+                location:
+                  type: string
+                  example: 'San Francisco, CA'
+                website:
+                  type: string
+                  example: 'https://johndoe.dev'
+                username:
+                  type: string
+                  example: 'johndoe_dev'
+                avatar:
+                  type: string
+                  example: 'https://example.com/new-avatar.jpg'
+                cover_photo:
+                  type: string
+                  example: 'https://example.com/new-cover.jpg'
+      responses:
+        '200':
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  result:
+                    $ref: '#/components/schemas/User'
+
+  /users/follow:
+    post:
+      tags:
+        - Users
+      summary: Follow a user
+      description: Follow another user
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - followed_user_id
+              properties:
+                followed_user_id:
+                  type: string
+                  example: '507f1f77bcf86cd799439011'
+      responses:
+        '200':
+          description: User followed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /users/unfollow/{followed_user_id}:
+    delete:
+      tags:
+        - Users
+      summary: Unfollow a user
+      description: Unfollow a user
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: followed_user_id
+          required: true
+          schema:
+            type: string
+          description: ID of user to unfollow
+          example: '507f1f77bcf86cd799439011'
+      responses:
+        '200':
+          description: User unfollowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /users/find:
+    post:
+      tags:
+        - Users
+      summary: Search users by email
+      description: Find users by email address
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: 'john@example.com'
+      responses:
+        '200':
+          description: Users found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+
+  /users/update/{id}:
+    put:
+      tags:
+        - Users
+      summary: Update user by ID
+      description: Admin endpoint to update user
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: User ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  # ==================== TWEETS ENDPOINTS ====================
+  /tweets:
+    post:
+      tags:
+        - Tweets
+      summary: Create a tweet
+      description: Create a new tweet with optional media
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - type
+                - audience
+                - content
+              properties:
+                type:
+                  type: integer
+                  enum: [0, 1, 2, 3]
+                  description: '0: Tweet, 1: ReTweet, 2: Comment, 3: QuoteTweet'
+                  example: 0
+                audience:
+                  type: integer
+                  enum: [0, 1, 2]
+                  description: '0: Everyone, 1: TweetCircle, 2: OnlyMe'
+                  example: 0
+                content:
+                  type: string
+                  example: 'This is my tweet!'
+                parent_id:
+                  type: string
+                  nullable: true
+                  example: null
+                hashtags:
+                  type: array
+                  items:
+                    type: string
+                  example: []
+                mentions:
+                  type: array
+                  items:
+                    type: string
+                  example: []
+                medias:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Media'
+                  example: []
+      responses:
+        '200':
+          description: Tweet created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  result:
+                    $ref: '#/components/schemas/Tweet'
+
+    get:
+      tags:
+        - Tweets
+      summary: Get news feed
+      description: Get tweets for news feed with pagination
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+            example: 10
+          description: Number of tweets per page
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+            example: 1
+          description: Page number
+      responses:
+        '200':
+          description: News feed tweets
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  result:
+                    type: object
+                    properties:
+                      tweets:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Tweet'
+                      limit:
+                        type: integer
+                      page:
+                        type: integer
+                      total:
+                        type: integer
+
+  /tweets/{tweet_id}:
+    get:
+      tags:
+        - Tweets
+      summary: Get tweet detail
+      description: Get detailed information about a specific tweet
+      parameters:
+        - in: path
+          name: tweet_id
+          required: true
+          schema:
+            type: string
+          description: Tweet ID
+          example: '507f1f77bcf86cd799439011'
+      responses:
+        '200':
+          description: Tweet detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  result:
+                    $ref: '#/components/schemas/Tweet'
+        '404':
+          description: Tweet not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /tweets/{tweet_id}/children:
+    get:
+      tags:
+        - Tweets
+      summary: Get tweet children
+      description: Get comments/replies to a tweet
+      parameters:
+        - in: path
+          name: tweet_id
+          required: true
+          schema:
+            type: string
+          description: Tweet ID
+          example: '507f1f77bcf86cd799439011'
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Number of children per page
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+        - in: query
+          name: tweet_type
+          schema:
+            type: integer
+            enum: [0, 1, 2, 3]
+          description: Filter by tweet type
+      responses:
+        '200':
+          description: Tweet children
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  result:
+                    type: object
+                    properties:
+                      tweets:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Tweet'
+                      limit:
+                        type: integer
+                      page:
+                        type: integer
+                      total:
+                        type: integer
+
+  # ==================== MEDIA ENDPOINTS ====================
+  /medias/upload-image:
+    post:
+      tags:
+        - Media
+      summary: Upload image
+      description: Upload image file
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: Image file to upload
+      responses:
+        '200':
+          description: Image uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Media'
+
+  /medias/upload-video:
+    post:
+      tags:
+        - Media
+      summary: Upload video
+      description: Upload video file
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                video:
+                  type: string
+                  format: binary
+                  description: Video file to upload
+      responses:
+        '200':
+          description: Video uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Media'
+
+  /medias/upload-video-hls:
+    post:
+      tags:
+        - Media
+      summary: Upload video for HLS streaming
+      description: Upload video for adaptive HLS streaming
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                video:
+                  type: string
+                  format: binary
+                  description: Video file to upload for HLS encoding
+      responses:
+        '200':
+          description: Video uploaded for HLS
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Media'
+
+  # ==================== STATIC FILES ENDPOINTS ====================
+  /static/image/{name}:
+    get:
+      tags:
+        - Static
+      summary: Serve image
+      description: Serve static image file
+      parameters:
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
+          description: Image filename
+          example: 'image123.jpg'
+      responses:
+        '200':
+          description: Image file
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+
+  /static/video-stream/{folder}/{name}:
+    get:
+      tags:
+        - Static
+      summary: Stream video
+      description: Stream video file with range support
+      parameters:
+        - in: path
+          name: folder
+          required: true
+          schema:
+            type: string
+          description: Video folder name
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
+          description: Video filename
+      responses:
+        '206':
+          description: Video stream (partial content)
+          content:
+            video/mp4:
+              schema:
+                type: string
+                format: binary
+
+  /static/video-hls/{id}/master.m3u8:
+    get:
+      tags:
+        - Static
+      summary: Serve HLS manifest
+      description: Serve HLS master playlist file
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Video ID
+      responses:
+        '200':
+          description: HLS manifest file
+          content:
+            application/vnd.apple.mpegurl:
+              schema:
+                type: string
+
+  /static/video-hls/{id}/{v}/{segment}:
+    get:
+      tags:
+        - Static
+      summary: Serve HLS segment
+      description: Serve HLS video segment
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Video ID
+        - in: path
+          name: v
+          required: true
+          schema:
+            type: string
+          description: Video variant/quality
+        - in: path
+          name: segment
+          required: true
+          schema:
+            type: string
+          description: Segment filename
+      responses:
+        '200':
+          description: Video segment
+          content:
+            video/mp2t:
+              schema:
+                type: string
+                format: binary
+
+  # ==================== BOOKMARKS ENDPOINTS ====================
+  /bookmarks:
+    post:
+      tags:
+        - Bookmarks
+      summary: Bookmark a tweet
+      description: Add tweet to bookmarks
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - tweet_id
+              properties:
+                tweet_id:
+                  type: string
+                  example: '507f1f77bcf86cd799439011'
+      responses:
+        '200':
+          description: Tweet bookmarked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /bookmarks/{tweet_id}:
+    delete:
+      tags:
+        - Bookmarks
+      summary: Remove bookmark
+      description: Remove tweet from bookmarks
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: tweet_id
+          required: true
+          schema:
+            type: string
+          description: Tweet ID
+          example: '507f1f77bcf86cd799439011'
+      responses:
+        '200':
+          description: Bookmark removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  # ==================== LIKES ENDPOINTS ====================
+  /likes:
+    post:
+      tags:
+        - Likes
+      summary: Like a tweet
+      description: Like a tweet
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - tweet_id
+              properties:
+                tweet_id:
+                  type: string
+                  example: '507f1f77bcf86cd799439011'
+      responses:
+        '200':
+          description: Tweet liked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /likes/{tweet_id}:
+    delete:
+      tags:
+        - Likes
+      summary: Unlike a tweet
+      description: Remove like from tweet
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: tweet_id
+          required: true
+          schema:
+            type: string
+          description: Tweet ID
+          example: '507f1f77bcf86cd799439011'
+      responses:
+        '200':
+          description: Like removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  # ==================== SEARCH ENDPOINTS ====================
+  /search:
+    get:
+      tags:
+        - Search
+      summary: Search content
+      description: Search for tweets and users
+      parameters:
+        - in: query
+          name: query
+          required: true
+          schema:
+            type: string
+          description: Search query
+          example: 'javascript'
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Results per page
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  result:
+                    type: object
+                    properties:
+                      tweets:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Tweet'
+                      users:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/User'
+
+  # ==================== CHAT ENDPOINTS ====================
+  /chat/users/search:
+    get:
+      tags:
+        - Chat
+      summary: Search users to chat
+      description: Search for users to start a conversation
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: query
+          required: true
+          schema:
+            type: string
+          description: Search query (username or name)
+          example: 'john'
+      responses:
+        '200':
+          description: Users found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+
+  /chat/conversations:
+    get:
+      tags:
+        - Chat
+      summary: Get user conversations
+      description: Get all conversations for current user
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User conversations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Conversation'
+
+    post:
+      tags:
+        - Chat
+      summary: Create or get conversation
+      description: Create new conversation or get existing one with another user
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - receiver_id
+              properties:
+                receiver_id:
+                  type: string
+                  example: '507f1f77bcf86cd799439011'
+      responses:
+        '200':
+          description: Conversation created or retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  result:
+                    $ref: '#/components/schemas/Conversation'
+
+  /chat/conversations/{conversationId}/messages:
+    get:
+      tags:
+        - Chat
+      summary: Get conversation messages
+      description: Get all messages in a conversation
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: conversationId
+          required: true
+          schema:
+            type: string
+          description: Conversation ID
+          example: '507f1f77bcf86cd799439011'
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+          description: Messages per page
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+      responses:
+        '200':
+          description: Conversation messages
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+
+  /chat/conversations/{conversationId}/read:
+    patch:
+      tags:
+        - Chat
+      summary: Mark messages as read
+      description: Mark all messages in conversation as read
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: conversationId
+          required: true
+          schema:
+            type: string
+          description: Conversation ID
+          example: '507f1f77bcf86cd799439011'
+      responses:
+        '200':
+          description: Messages marked as read
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /chat/conversations/{conversationId}:
+    delete:
+      tags:
+        - Chat
+      summary: Delete conversation
+      description: Delete a conversation
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: conversationId
+          required: true
+          schema:
+            type: string
+          description: Conversation ID
+          example: '507f1f77bcf86cd799439011'
+      responses:
+        '200':
+          description: Conversation deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'

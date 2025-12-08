@@ -14,6 +14,7 @@ import { ErrorWithStatus } from '~/utils/error'
 import httpStatus from '~/constants/httpStatus'
 import jwt from 'jsonwebtoken'
 import FollowersModel from '~/models/follower.model'
+import { EmailService } from '~/services/email.service'
 
 config()
 export const UserService = {
@@ -177,7 +178,14 @@ export const UserService = {
         user_id: new mongoose.Types.ObjectId(user_id),
         token: refreshToken
       })
-      console.log('email_verify_token', email_verify_token)
+
+      // Send verification email
+      await EmailService.sendVerificationEmail({
+        to: userData.email,
+        name: userData.name,
+        verificationToken: email_verify_token
+      })
+
       // 5. Nếu cả hai thành công, commit transaction
       await session.commitTransaction()
       return { accessToken, refreshToken }
@@ -230,7 +238,15 @@ export const UserService = {
   },
   async resendVerifyEmail(user_id: string) {
     const email_verify_token = await this.signEmailVerifyToken({ user_id, verify: UserVerifyStatus.Unverified })
-    console.log('email_verify_token', email_verify_token)
+    const user = (await UserModel.findById(user_id)) as User
+
+    // Send verification email
+    await EmailService.sendVerificationEmail({
+      to: user.email,
+      name: user.name,
+      verificationToken: email_verify_token
+    })
+
     await UserModel.findByIdAndUpdate(user_id, { email_verify_token }, { $currentDate: { updated_at: true } })
     return {
       message: userMessages.RESEND_EMAIL_VERIFIED_SUCCESSFULLY
@@ -238,8 +254,16 @@ export const UserService = {
   },
   async forgotPassword({ user_id, verify }: { user_id: string; verify: UserVerifyStatus }) {
     const forgot_password_token = await this.signForgotPasswordToken({ user_id, verify })
+    const user = (await UserModel.findById(user_id)) as User
+
+    // Send password reset email
+    await EmailService.sendPasswordResetEmail({
+      to: user.email,
+      name: user.name,
+      resetToken: forgot_password_token
+    })
+
     await UserModel.findByIdAndUpdate(user_id, { forgot_password_token }, { $currentDate: { updated_at: true } })
-    console.log('forgot_password_token', forgot_password_token)
     return {
       message: userMessages.FORGOT_PASSWORD_EMAIL_SENT_SUCCESSFULLY
     }
