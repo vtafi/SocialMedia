@@ -20,7 +20,7 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build TypeScript to JavaScript
+# Build TypeScript to JavaScript  
 RUN npm run build
 
 # ============================================
@@ -31,7 +31,9 @@ FROM node:22-alpine
 # Install runtime dependencies and dumb-init for signal handling
 RUN apk add --no-cache \
     python3 \
-    dumb-init
+    dumb-init \
+    ffmpeg \
+    bash
 
 WORKDIR /app
 
@@ -72,7 +74,7 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
   CMD node -e "require('http').get('http://localhost:8386/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})" || exit 1
 
 # Use dumb-init to handle signals properly (for graceful shutdown)
-ENTRYPOINT ["dumb-init", "--"]
+ENTRYPOINT ["dumb-init", "--"] 
 
 # Start application in production mode
 CMD ["node", "dist/index.js", "--production"]

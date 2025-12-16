@@ -1,7 +1,8 @@
-import { S3Client, ListBucketsCommand } from '@aws-sdk/client-s3'
+import { S3Client, ListBucketsCommand, GetObjectCommand } from '@aws-sdk/client-s3'
 import dotenv from 'dotenv'
 import { Upload } from '@aws-sdk/lib-storage'
 import fs from 'fs'
+import { Response } from 'express'
 dotenv.config()
 // Retrieve values from environment variables
 const region = process.env.AWS_REGION
@@ -57,4 +58,26 @@ export const uploadFileToS3 = ({
     leavePartsOnError: false
   })
   return parallelUploads3.done()
+}
+
+/**
+ * Stream file từ S3 về client (dùng server làm proxy)
+ * @param res Express Response object
+ * @param filepath Đường dẫn file trên S3 (Key)
+ */
+export const sendFileFromS3 = async (res: Response, filepath: string) => {
+  try {
+    const data = await s3Client.send(
+      new GetObjectCommand({
+        Bucket: process.env.S3_BUCKET_NAME,
+        Key: filepath
+      })
+    )
+    // Pipe stream từ S3 về client
+    // Note: Phải ép kiểu as any vì AWS SDK v3 TypeScript definition thiếu .pipe()
+    ;(data.Body as any).pipe(res)
+  } catch (error) {
+    console.error('Error streaming from S3:', error)
+    res.status(404).send('File not found')
+  }
 }

@@ -45,6 +45,7 @@ const forgotPasswordTokenSchema: ParamSchema = {
   trim: true,
   custom: {
     options: async (value, { req }) => {
+      console.log(value)
       // Kiểm tra empty ngay trong custom
       if (!value) {
         throw new ErrorWithStatus({
@@ -66,7 +67,8 @@ const forgotPasswordTokenSchema: ParamSchema = {
           publicKey: process.env.JWT_SECRET_FORGOT_PASSWORD_TOKEN as string
         })
         const { user_id } = decoded_forgot_password_token
-        const user = await UserModel.findById(user_id)
+        const user = await UserModel.findById(user_id).select('+forgot_password_token')
+        console.log(user)
         if (user === null) {
           throw new ErrorWithStatus({
             message: userMessages.TOKEN_INVALID_OR_EXPIRED,

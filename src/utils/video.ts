@@ -1,6 +1,14 @@
 import path from 'path'
-import { $ } from 'zx'
+import { $, ProcessOutput } from 'zx'
 import slash from 'slash'
+
+// Configure zx shell based on OS
+// Windows (dev): Let zx auto-detect (uses cmd.exe or powershell)
+// Linux/Docker (prod): Use bash
+if (process.platform !== 'win32') {
+  $.shell = '/bin/bash'
+}
+$.verbose = false
 
 const MAXIMUM_BITRATE_720P = 5 * 10 ** 6 // 5Mbps
 const MAXIMUM_BITRATE_1080P = 8 * 10 ** 6 // 8Mbps

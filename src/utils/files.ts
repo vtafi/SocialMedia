@@ -89,3 +89,23 @@ export const getExtensionFromFullName = (fullName: string) => {
   const nameArray = fullName.split('.')
   return nameArray.pop()
 }
+
+/**
+ * Quét đệ quy tất cả file trong thư mục (bao gồm thư mục con)
+ * @param dir Đường dẫn thư mục cần quét
+ * @returns Mảng chứa đường dẫn tuyệt đối của tất cả file
+ */
+export const getFiles = (dir: string, files: string[] = []): string[] => {
+  const fileList = fs.readdirSync(dir)
+  for (const file of fileList) {
+    const filePath = path.join(dir, file)
+    if (fs.statSync(filePath).isDirectory()) {
+      // Nếu là thư mục, gọi đệ quy
+      getFiles(filePath, files)
+    } else {
+      // Nếu là file, thêm vào mảng
+      files.push(filePath)
+    }
+  }
+  return files
+}
