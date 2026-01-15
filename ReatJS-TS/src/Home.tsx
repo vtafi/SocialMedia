@@ -70,7 +70,7 @@ function Home() {
       <h2>Video HLS</h2>
       <MediaPlayer
         title="Sprite Fight"
-        src="http://localhost:8386/static/video-hls/tgx4tk6ZJLh2NRIwkcGmi/master.m3u8"
+        src="https://twitter-nodejs-1.s3.ap-southeast-1.amazonaws.com/videos-hls/RtAFEZiRBK8m4IbmHaIHy/master.m3u8"
       >
         <MediaProvider />
         <DefaultVideoLayout
