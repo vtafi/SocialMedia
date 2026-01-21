@@ -305,126 +305,6 @@ erDiagram
 
 ---
 
-## 🚀 Installation & Setup
-
-### Prerequisites
-
-- **Node.js** >= 18.x
-- **MongoDB** >= 6.x (local or Atlas)
-- **Redis** >= 7.x
-- **Docker & Docker Compose** (recommended)
-- **AWS Account** (for S3 storage)
-- **FFmpeg** (for video processing)
-
-### Environment Variables
-
-Create a `.env` file in the `NodeJS-TS` directory:
-
-```env
-# =================================
-# Server Configuration
-# =================================
-PORT=4000
-HOST=http://localhost:4000
-
-# =================================
-# Database
-# =================================
-MONGO_URI=mongodb://localhost:27017/twitter-clone
-REDIS_URL=redis://localhost:6379
-
-# =================================
-# JWT Secrets
-# =================================
-JWT_SECRET_ACCESS_TOKEN=your_access_token_secret_here
-JWT_SECRET_REFRESH_TOKEN=your_refresh_token_secret_here
-JWT_SECRET_EMAIL_VERIFY_TOKEN=your_email_verify_secret_here
-JWT_SECRET_FORGOT_PASSWORD_TOKEN=your_forgot_password_secret_here
-
-# Token Expiration
-ACCESS_TOKEN_EXPIRES_IN=15m
-REFRESH_TOKEN_EXPIRES_IN=7d
-
-# =================================
-# AWS S3 Configuration
-# =================================
-AWS_ACCESS_KEY_ID=your_aws_access_key
-AWS_SECRET_ACCESS_KEY=your_aws_secret_key
-AWS_REGION=ap-southeast-1
-AWS_S3_BUCKET_NAME=your-bucket-name
-
-# =================================
-# Google OAuth
-# =================================
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-GOOGLE_REDIRECT_URI=http://localhost:4000/users/oauth/google
-CLIENT_REDIRECT_URI=http://localhost:3000/login/oauth
-
-# =================================
-# Email (Resend)
-# =================================
-RESEND_API_KEY=your_resend_api_key
-```
-
-### 🐳 Option 1: Docker Compose (Recommended)
-
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/twitter-clone.git
-cd twitter-clone/NodeJS-TS
-
-# Start all services
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-```
-
-### 📦 Option 2: Manual Setup
-
-```bash
-# Navigate to backend directory
-cd NodeJS-TS
-
-# Install dependencies
-npm install
-
-# Development mode (with hot reload)
-npm run dev
-
-# Production build
-npm run build
-npm start
-```
-
-### Frontend Setup
-
-```bash
-# Navigate to frontend directory
-cd ReatJS-TS
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-```
-
----
-
-## 📚 API Documentation
-
-The API is documented using **OpenAPI 3.0 (Swagger)**.
-
-### Access Documentation
-
-After starting the server, navigate to:
-
-```
-http://localhost:4000/api-docs
-```
-
 ### API Endpoints Overview
 
 | Module     | Endpoint                        | Description         |
@@ -441,7 +321,7 @@ http://localhost:4000/api-docs
 | **Search** | `GET /search`                   | Search tweets       |
 | **Chat**   | `WebSocket /`                   | Real-time messaging |
 
-📄 **Full API Documentation:** [`API_DOCUMENT.yaml`](./NodeJS-TS/API_DOCUMENT.yaml)
+<!-- 📄 **Full API Documentation:** [`API_DOCUMENT.yaml`](./NodeJS-TS/API_DOCUMENT.yaml) -->
 
 ---
 
@@ -472,21 +352,3 @@ Twitter/
 ```
 
 ---
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
----
-
-## 📝 License
-
-This project is licensed under the ISC License.
-
----
-
-<div align="center">
-
-**Built with ❤️ using Node.js, TypeScript, and MongoDB**
-
-</div>
