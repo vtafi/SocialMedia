@@ -45,6 +45,27 @@ const usersRouter = Router()
 */
 usersRouter.post('/login', loginValidator, wrapAsync(loginController))
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*
   Description: OAuth Google
   Path: /users/oauth/google
