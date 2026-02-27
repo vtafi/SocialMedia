@@ -1,12 +1,13 @@
 import express from 'express'
 import usersRouter from './routes/user.routes'
-import { connectDB } from './services/database.service'
+import { connectDB } from './database/mongo.database'
 import { defaultErrorHandler } from './middlewares/error.middlewares'
 import mediasRouter from './routes/media.routes'
 import { initFolder } from './utils/files'
 import { config } from 'dotenv'
 import staticRouter from './routes/static.routes'
 import cors from 'cors'
+import cookieParser from 'cookie-parser'
 import tweetRouter from './routes/tweet.routes'
 import bookmarkRouter from './routes/bookmark.routes'
 import likeRouter from './routes/like.routes'
@@ -27,7 +28,8 @@ const PORT = process.env.PORT || 8386
 const httpServer = createServer(app)
 const io = new Server(httpServer, {
   cors: {
-    origin: 'http://localhost:5173'
+    origin: 'http://localhost:5173',
+    credentials: true
   }
 })
 
@@ -36,8 +38,15 @@ initFolder()
 // Swagger documentation setup
 const swaggerDocument = YAML.parse(readFileSync(join(__dirname, '../API_DOCUMENT.yaml'), 'utf8'))
 
-app.use(cors())
+// CORS configuration - explicitly allow frontend origin
+app.use(
+  cors({
+    origin: 'http://localhost:5173',
+    credentials: true
+  })
+)
 app.use(express.json())
+app.use(cookieParser())
 
 // Swagger UI route - Access at http://localhost:8386/api-docs
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))

@@ -179,57 +179,44 @@ export const registerValidator = validate(
   )
 )
 
-export const accessTokenValidator = validate(
-  checkSchema(
-    {
-      authorization: {
-        notEmpty: {
-          errorMessage: userMessages.ACCESS_TOKEN_REQUIRED
-        },
-        custom: {
-          options: async (value, { req }) => {
-            if (!value) {
-              throw new ErrorWithStatus({
-                message: userMessages.ACCESS_TOKEN_REQUIRED,
-                status: httpStatus.UNAUTHORIZED // 401
-              })
-            }
+export const accessTokenValidator = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // Đọc access_token từ cookie trước, fallback sang Authorization header
+    let accessToken = req.cookies?.access_token
 
-            // Kiểm tra type
-            if (typeof value !== 'string') {
-              throw new ErrorWithStatus({
-                message: userMessages.ACCESS_TOKEN_STRING_REQUIRED,
-                status: httpStatus.UNAUTHORIZED // 401
-              })
-            }
-            const accessToken = value.split(' ')[1]
-
-            if (!accessToken) {
-              throw new ErrorWithStatus({
-                message: userMessages.ACCESS_TOKEN_REQUIRED,
-                status: httpStatus.UNAUTHORIZED
-              })
-            }
-            try {
-              const decoded_authorization = await verifyToken({
-                token: accessToken,
-                publicKey: process.env.JWT_SECRET_ACCESS_TOKEN as string
-              })
-              req.decoded_authorization = decoded_authorization
-            } catch (error) {
-              throw new ErrorWithStatus({
-                message: userMessages.TOKEN_INVALID_OR_EXPIRED,
-                status: httpStatus.UNAUTHORIZED
-              })
-            }
-            return true
-          }
-        }
+    if (!accessToken) {
+      const authorization = req.headers.authorization
+      if (authorization) {
+        accessToken = authorization.split(' ')[1]
       }
-    },
-    ['headers']
-  )
-)
+    }
+
+    if (!accessToken) {
+      return next(
+        new ErrorWithStatus({
+          message: userMessages.ACCESS_TOKEN_REQUIRED,
+          status: httpStatus.UNAUTHORIZED
+        })
+      )
+    }
+
+    try {
+      const decoded_authorization = await verifyToken({
+        token: accessToken,
+        publicKey: process.env.JWT_SECRET_ACCESS_TOKEN as string
+      })
+      req.decoded_authorization = decoded_authorization
+    } catch (error) {
+      throw new ErrorWithStatus({
+        message: userMessages.TOKEN_INVALID_OR_EXPIRED,
+        status: httpStatus.UNAUTHORIZED
+      })
+    }
+    next()
+  } catch (error) {
+    next(error)
+  }
+}
 
 export const refreshTokenValidator = validate(
   checkSchema(
@@ -237,8 +224,11 @@ export const refreshTokenValidator = validate(
       refresh_token: {
         custom: {
           options: async (value, { req }) => {
+            // Đọc từ cookie nếu không có trong body
+            const tokenValue = value || req.cookies?.refresh_token
+
             // Kiểm tra empty ngay trong custom
-            if (!value) {
+            if (!tokenValue) {
               throw new ErrorWithStatus({
                 message: userMessages.REFRESH_TOKEN_REQUIRED,
                 status: httpStatus.UNAUTHORIZED // 401
@@ -246,7 +236,7 @@ export const refreshTokenValidator = validate(
             }
 
             // Kiểm tra type
-            if (typeof value !== 'string') {
+            if (typeof tokenValue !== 'string') {
               throw new ErrorWithStatus({
                 message: userMessages.REFRESH_STRING_REQUIRED,
                 status: httpStatus.UNAUTHORIZED // 401
@@ -254,8 +244,8 @@ export const refreshTokenValidator = validate(
             }
             try {
               const [decoded_refresh_token, refreshToken] = await Promise.all([
-                verifyToken({ token: value, publicKey: process.env.JWT_SECRET_REFRESH_TOKEN as string }),
-                RefreshTokenModel.findOne({ token: value })
+                verifyToken({ token: tokenValue, publicKey: process.env.JWT_SECRET_REFRESH_TOKEN as string }),
+                RefreshTokenModel.findOne({ token: tokenValue })
               ])
               if (refreshToken === null) {
                 throw new ErrorWithStatus({
@@ -563,7 +553,7 @@ export const unfollowUserValidator = validate(
 
 export const isUserLoggedInValidator = (validator: (req: Request, res: Response, next: NextFunction) => void) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    if (req.headers.authorization) {
+    if (req.cookies?.access_token || req.headers.authorization) {
       return validator(req, res, next)
     }
     next()

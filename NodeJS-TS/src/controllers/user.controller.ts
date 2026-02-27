@@ -24,6 +24,13 @@ import { config } from 'dotenv'
 import { pick } from 'lodash'
 config()
 
+const cookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax' as const,
+  path: '/'
+}
+
 export const loginController = async (req: Request<ParamsDictionary, any, LoginRequestBody>, res: Response) => {
   const { user }: any = req
 
@@ -31,7 +38,17 @@ export const loginController = async (req: Request<ParamsDictionary, any, LoginR
 
   const result = await UserService.login({ user_id, verify: user.verify })
 
-  return res.json({ message: 'Login successful', result })
+  // Set tokens vào HTTP-only cookies
+  res.cookie('access_token', result.accessToken, {
+    ...cookieOptions,
+    maxAge: 15 * 60 * 1000 // 15 phút
+  })
+  res.cookie('refresh_token', result.refreshToken, {
+    ...cookieOptions,
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 ngày
+  })
+
+  return res.json({ message: 'Login successful', result: { user: result } })
 }
 
 export const registerController = async (
@@ -48,8 +65,13 @@ export const registerController = async (
 }
 
 export const logoutController = async (req: Request<ParamsDictionary, any, LogoutRequestBody>, res: Response) => {
-  const { refresh_token } = req.body
+  // Đọc refresh_token từ cookie, fallback sang body
+  const refresh_token = req.cookies?.refresh_token || req.body?.refresh_token
   const result = await UserService.logout(refresh_token)
+
+  // Clear cả 2 cookies
+  res.clearCookie('access_token', { path: '/' })
+  res.clearCookie('refresh_token', { path: '/' })
 
   res.status(200).json(result)
 }
@@ -158,22 +180,43 @@ export const oauthGoogleController = async (req: Request, res: Response) => {
   console.log(req.url)
   const { code } = req.query
   const { accessToken, refreshToken, newUser } = await UserService.oauthGoogle(code as string)
-  const urlRedirect = `${process.env.CLIENT_URL}?access_token=${accessToken}&refresh_token=${refreshToken}&newUser=${newUser}`
+
+  // Set tokens vào HTTP-only cookies
+  res.cookie('access_token', accessToken, {
+    ...cookieOptions,
+    maxAge: 15 * 60 * 1000 // 15 phút
+  })
+  res.cookie('refresh_token', refreshToken, {
+    ...cookieOptions,
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 ngày
+  })
+
+  const urlRedirect = `${process.env.CLIENT_REDIRECT_URL || 'http://localhost:5173'}?newUser=${newUser}`
   return res.redirect(urlRedirect)
 }
 
 export const refreshTokenController = async (req: Request, res: Response) => {
   try {
-    const { refresh_token } = req.body
+    // Đọc refresh_token từ cookie, fallback sang body
+    const refresh_token = req.cookies?.refresh_token || req.body?.refresh_token
 
     // Call service
     const result = await UserService.refreshToken(refresh_token)
 
+    // Set cookies mới
+    res.cookie('access_token', result.accessToken, {
+      ...cookieOptions,
+      maxAge: 15 * 60 * 1000 // 15 phút
+    })
+    res.cookie('refresh_token', result.refreshToken, {
+      ...cookieOptions,
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 ngày
+    })
+
     // ✅ Success response
     return res.status(200).json({
       success: true,
-      message: 'Token refreshed successfully',
-      data: result
+      message: 'Token refreshed successfully'
     })
   } catch (error: any) {
     // ❌ Error responses (401, 404, 403)
