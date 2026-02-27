@@ -1,14 +1,8 @@
 import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
-import { MediaPlayer, MediaProvider } from "@vidstack/react";
-import {
-  defaultLayoutIcons,
-  DefaultVideoLayout,
-} from "@vidstack/react/player/layouts/default";
-import "@vidstack/react/player/styles/default/theme.css";
-import "@vidstack/react/player/styles/default/layouts/video.css";
+
 import getOauthGoogleUrl from "./components/auth/Login";
-  
+
 function Home() {
   const isAuthenticated = Boolean(localStorage.getItem("access_token"));
   const oauthURL = getOauthGoogleUrl();
@@ -37,7 +31,7 @@ function Home() {
         ) : (
           <a href={oauthURL}>Login with Google</a>
         )}
-      </div> 
+      </div>
     </>
   );
 }

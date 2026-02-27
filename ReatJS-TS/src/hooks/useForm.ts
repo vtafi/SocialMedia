@@ -1,5 +1,7 @@
-import { useState, ChangeEvent, FormEvent } from "react";
-import { ValidationRules, validateForm } from "../utils/validation";
+import { useState } from "react";
+import type { ChangeEvent, FormEvent } from "react";
+import { validateForm } from "../utils/validation";
+import type { ValidationRules } from "../utils/validation";
 
 interface UseFormOptions<T> {
   initialValues: T;
