@@ -1,30 +1,35 @@
-# Dependencies
+# ==============================
+# DEPENDENCIES
+# ==============================
+# Không copy node_modules vào image (sẽ được cài lại trong Docker)
 node_modules
-npm-debug.log
-yarn-error.log
-# package-lock.json is REQUIRED for npm ci - do NOT exclude it
+npm-debug.log*
+yarn-error.log*
 
-# Build output (will be generated during Docker build)
+# ==============================
+# BUILD OUTPUT
+# ==============================
+# dist/ sẽ được tạo bởi lệnh build trong stage builder
 dist
 
-# Environment files
-# Block local .env files to prevent accidental copying
+# ==============================
+# ENVIRONMENT FILES - BẢO MẬT
+# ==============================
+# Chặn TOÀN BỘ file .env -> biến môi trường sẽ được inject lúc runtime qua env_file
 .env
-.env.development
-.env.local
-.env.test
+.env.*
+!.env.example       # Chỉ cho phép file example (không có secret)
 
-# Allow specific env files for Docker build
-!.env.production
-!.env.example
-!.env.email.example
-
-# Git
+# ==============================
+# GIT
+# ==============================
 .git
 .gitignore
 .gitattributes
 
-# IDE and Editor files
+# ==============================
+# IDE / EDITOR
+# ==============================
 .vscode
 .idea
 *.swp
@@ -32,44 +37,56 @@ dist
 *~
 .DS_Store
 
-# Logs
+# ==============================
+# LOGS
+# ==============================
 logs
 *.log
 
-# Testing
+# ==============================
+# TESTING
+# ==============================
 coverage
 .nyc_output
 *.test.ts
 *.spec.ts
+__tests__
 
-# Temporary files
-tmp
-temp
+# ==============================
+# UPLOADS & TEMP
+# ==============================
+# Uploads được mount qua volume, không cần bake vào image
 uploads/*
 !uploads/.gitkeep
+tmp
+temp
 
-# Documentation (unless needed in production)
+# ==============================
+# DOCS (không cần trong runtime, trừ API_DOCUMENT.yaml)
+# ==============================
 README.md
 CHANGELOG.md
 LICENSE
 
+# ==============================
 # CI/CD
+# ==============================
 .github
 .gitlab-ci.yml
 .travis.yml
 
-# Linting and formatting
+# ==============================
+# LINTING & FORMATTING
+# ==============================
 .eslintrc*
+eslint.config.mts
 .prettierrc*
 .prettierignore
 .editorconfig
-eslint.config.mts
 
-# TypeScript config - REQUIRED for build stage
-# Will not be in final image due to multi-stage build
-# tsconfig.json
-
-# Docker files
+# ==============================
+# DOCKER FILES (không cần bên trong image)
+# ==============================
 Dockerfile
 docker-compose.yml
 .dockerignore

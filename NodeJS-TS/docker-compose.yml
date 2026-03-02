@@ -1,0 +1,102 @@
+# ============================================================
+# docker-compose.yml - Production configuration cho Web Booking Backend
+# Tương thích với Nginx Proxy Manager chạy sẵn trên server
+# ============================================================
+
+services:
+  # ----------------------------------------------------------
+  # Service 1: MongoDB Database
+  # ----------------------------------------------------------
+  mongodb:
+    image: mongo:latest
+    container_name: booking_mongodb
+
+    # Tự động khởi động lại trừ khi bị stop thủ công
+    restart: unless-stopped
+
+    # Biến môi trường để tạo user admin cho MongoDB (tuỳ chọn nhưng nên có)
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_DB_NAME}
+
+    volumes:
+      # Lưu dữ liệu MongoDB ra ngoài container để không mất khi restart
+      - mongo_data:/data/db
+
+    # KHÔNG map port ra ngoài host -> MongoDB chỉ accessible từ internal network
+    # (Đây là yêu cầu bảo mật: không ai từ internet kết nối thẳng vào DB được)
+
+    networks:
+      # Chỉ tham gia internal network, KHÔNG join proxy-network
+      - internal_network
+
+    # Giới hạn tài nguyên để tránh MongoDB chiếm hết RAM server
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  # ----------------------------------------------------------
+  # Service 2: Backend Node.js Application
+  # ----------------------------------------------------------
+  backend:
+    # Build image từ Dockerfile trong thư mục hiện tại
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: booking_backend
+
+    restart: unless-stopped
+
+    # Load toàn bộ biến môi trường từ file .env (KHÔNG copy vào image)
+    # File .env phải có sẵn trên server khi chạy docker-compose up
+    env_file:
+      - .env
+
+    # Backend chỉ khởi động SAU KHI mongodb service đã sẵn sàng
+    depends_on:
+      - mongodb
+
+    # KHÔNG map port ra ngoài host -> Nginx Proxy Manager sẽ forward traffic
+    # qua proxy-network (xem phần networks bên dưới)
+
+    # Mount thư mục uploads để file upload của user không bị mất khi redeploy
+    volumes:
+      - ./uploads:/usr/src/app/uploads
+
+    networks:
+      # Kết nối vào internal network để giao tiếp với MongoDB
+      - internal_network
+      # Kết nối vào external network của Nginx Proxy Manager
+      # Nhờ đây, Nginx Proxy Manager có thể forward request vào backend
+      - proxy-network
+
+    # Giới hạn tài nguyên cho backend app
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+# ----------------------------------------------------------
+# Volumes: Lưu trữ dữ liệu bền vững
+# ----------------------------------------------------------
+volumes:
+  # MongoDB data volume - Docker quản lý, dữ liệu không mất khi container restart
+  mongo_data:
+    name: booking_mongo_data
+
+# ----------------------------------------------------------
+# Networks
+# ----------------------------------------------------------
+networks:
+  # Mạng nội bộ: chỉ để backend <-> mongodb giao tiếp
+  internal_network:
+    driver: bridge
+    name: booking_internal_network
+
+  # Mạng external của Nginx Proxy Manager (phải tạo trước: docker network create proxy-network)
+  # external: true nghĩa là Docker Compose KHÔNG tạo mới mà dùng network đã có sẵn
+  proxy-network:
+    external: true

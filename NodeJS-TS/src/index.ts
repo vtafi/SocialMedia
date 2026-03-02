@@ -28,7 +28,7 @@ const PORT = process.env.PORT || 8386
 const httpServer = createServer(app)
 const io = new Server(httpServer, {
   cors: {
-    origin: 'http://localhost:5173',
+    origin: process.env.CLIENT_REDIRECT_URL,
     credentials: true
   }
 })
@@ -41,7 +41,7 @@ const swaggerDocument = YAML.parse(readFileSync(join(__dirname, '../API_DOCUMENT
 // CORS configuration - explicitly allow frontend origin
 app.use(
   cors({
-    origin: 'http://localhost:5173',
+    origin: process.env.CLIENT_REDIRECT_URL, // Tự động đọc link Vercel hoặc Localhost từ file .env
     credentials: true
   })
 )

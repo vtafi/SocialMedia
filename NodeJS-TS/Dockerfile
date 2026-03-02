@@ -1,80 +1,71 @@
-# ============================================
-# Stage 1: Dependencies & Build
-# ============================================
-FROM node:22-alpine AS builder
+# ============================================================
+# Stage 1: Builder - Cài dependencies và build TypeScript
+# ============================================================
+FROM node:20-alpine AS builder
 
-# Install build tools for native modules (sharp, socket.io bindings)
-RUN apk add --no-cache \
-    python3 \
-    make \
-    g++
+# Cài build tools cần thiết cho native modules (sharp, bcrypt, ...)
+RUN apk add --no-cache python3 make g++
 
-WORKDIR /app
+WORKDIR /usr/src/app
 
-# Copy package files first (Docker cache optimization)
+# --- Tận dụng Docker layer cache ---
+# Copy package files TRƯỚC để Docker cache lại bước npm install.
+# Nếu source code thay đổi nhưng package.json không đổi -> bỏ qua bước install.
 COPY package*.json ./
 
-# Install all dependencies (including devDependencies for build)
+# Dùng npm ci (thay vì npm install) để đảm bảo cài đúng phiên bản từ package-lock.json
+# Bao gồm cả devDependencies vì cần TypeScript để build
 RUN npm ci
 
-# Copy source code
+# Copy toàn bộ source code (đã được lọc bởi .dockerignore)
 COPY . .
 
-# Build TypeScript to JavaScript  
+# Biên dịch TypeScript -> JavaScript vào thư mục dist/
 RUN npm run build
 
-# ============================================
-# Stage 2: Production Runtime
-# ============================================
-FROM node:22-alpine
 
-# Install runtime dependencies and dumb-init for signal handling
-RUN apk add --no-cache \
-    python3 \
-    dumb-init \
-    ffmpeg \
-    bash
+# ============================================================
+# Stage 2: Production Runtime - Image nhỏ gọn, chỉ chứa những gì cần thiết
+# ============================================================
+FROM node:20-alpine
 
-WORKDIR /app
+# dumb-init: xử lý tín hiệu OS đúng cách (SIGTERM) cho graceful shutdown
+# ffmpeg: xử lý media nếu cần
+RUN apk add --no-cache dumb-init ffmpeg
 
-# Copy package files
+WORKDIR /usr/src/app
+
+# Copy package files để install production dependencies
 COPY package*.json ./
 
-# Install ONLY production dependencies
-RUN npm ci --omit=dev && \
-    npm cache clean --force
+# Chỉ cài production dependencies (bỏ devDependencies để giảm kích thước image)
+RUN npm ci --omit=dev && npm cache clean --force
 
-# Copy built files from builder stage
-COPY --from=builder /app/dist ./dist
+# Copy code đã build từ stage builder
+COPY --from=builder /usr/src/app/dist ./dist
 
-# Copy Swagger API documentation (required by src/index.ts line 37)
-COPY --from=builder /app/API_DOCUMENT.yaml ./
+# Copy file YAML tài liệu API (được dùng trong runtime)
+COPY --from=builder /usr/src/app/API_DOCUMENT.yaml ./
 
-# ⚠️ SECURITY WARNING: Copying .env.production with secrets into image
-# This image should ONLY be pushed to private registries
-# Never share this image publicly as it contains sensitive credentials
-COPY --from=builder /app/.env.production ./.env
-
-# Create necessary directories
+# Tạo thư mục uploads để lưu file tạm (quyền ghi sẽ được gán cho user nodejs)
 RUN mkdir -p uploads
 
-# Create non-root user for security
+# --- Bảo mật: Chạy app bằng user KHÔNG có quyền root ---
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001 && \
-    chown -R nodejs:nodejs /app
+    chown -R nodejs:nodejs /usr/src/app
 
-# Switch to non-root user
 USER nodejs
 
-# Expose application port (from src/index.ts line 26: PORT = 8386)
+# Expose cổng app đang lắng nghe (PORT được set trong file .env)
 EXPOSE 8386
 
-# Health check using the /health endpoint (added at src/index.ts line 53)
-HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+# Health check: Gọi endpoint /health mỗi 30s để Docker biết container còn sống
+HEALTHCHECK --interval=30s --timeout=5s --start-period=45s --retries=3 \
   CMD node -e "require('http').get('http://localhost:8386/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})" || exit 1
 
-# Use dumb-init to handle signals properly (for graceful shutdown)
-ENTRYPOINT ["dumb-init", "--"] 
+# dumb-init làm PID 1 để forward signals đúng cách -> graceful shutdown
+ENTRYPOINT ["dumb-init", "--"]
 
-# Start application in production mode
+# Lệnh khởi chạy app trong production mode
 CMD ["node", "dist/index.js", "--production"]
