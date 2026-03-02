@@ -41,17 +41,13 @@ services:
   # Service 2: Backend Node.js Application
   # ----------------------------------------------------------
   backend:
-    # Build image từ Dockerfile trong thư mục hiện tại
-    build:
-      context: .
-      dockerfile: Dockerfile
+    # THAY THẾ ĐOẠN BUILD BẰNG IMAGE DƯỚI ĐÂY
+    image: ${DOCKERHUB_USERNAME}/twitter:latest
 
     container_name: booking_backend
-
     restart: unless-stopped
 
-    # Load toàn bộ biến môi trường từ file .env (KHÔNG copy vào image)
-    # File .env phải có sẵn trên server khi chạy docker-compose up
+    # Đảm bảo file .env này tồn tại trên EC2 (lệnh echo trong GitHub Actions đã làm việc này)
     env_file:
       - .env
 
