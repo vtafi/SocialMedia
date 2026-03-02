@@ -60,7 +60,7 @@ initFolder()
 const swaggerDocument = YAML.parse(readFileSync(join(__dirname, '../API_DOCUMENT.yaml'), 'utf8'))
 
 // Handle Preflight Requests
-app.options('*', cors(corsOptions))
+app.options(/.*/, cors(corsOptions))
 
 // CORS configuration
 app.use(cors(corsOptions))
