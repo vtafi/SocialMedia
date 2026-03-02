@@ -88,9 +88,27 @@ export const authService = {
     sessionStorage.removeItem("profile");
   },
 
+  async getMe(): Promise<UserProfile> {
+    const response = await fetch(`${API_BASE_URL}/users/me`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to get profile");
+    }
+
+    const data = await response.json();
+    return data.result;
+  },
+
   // Lưu thông tin user vào sessionStorage (KHÔNG lưu token - đã có trong cookie)
-  saveAuthData(data: AuthResponse["result"]): void {
-    sessionStorage.setItem("profile", JSON.stringify(data.user));
+  saveAuthData(data: AuthResponse["result"] | UserProfile): void {
+    const user = "user" in data ? data.user : data;
+    sessionStorage.setItem("profile", JSON.stringify(user));
   },
 
   getProfile(): UserProfile | null {

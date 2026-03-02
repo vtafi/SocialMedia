@@ -1,16 +1,49 @@
+import { useEffect, useState } from "react";
 import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
 
-import getOauthGoogleUrl from "./components/auth/Login";
+import getOauthGoogleUrl from "./components/auth/Login/SocialLogin";
+import { authService } from "./services/auth.service";
 
 function Home() {
-  const isAuthenticated = Boolean(localStorage.getItem("access_token"));
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
+    authService.isAuthenticated(),
+  );
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    // Luôn thử fetch /users/me khi vào trang để kiểm tra session cookie bằng backend
+    // Điều này để phục hồi trạng thái sau khi Redirect từ OAuth Google
+    authService
+      .getMe()
+      .then((profile) => {
+        authService.saveAuthData(profile);
+        setIsAuthenticated(true);
+      })
+      .catch(() => {
+        setIsAuthenticated(false);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
   const oauthURL = getOauthGoogleUrl();
+
   const logout = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    window.location.reload();
+    authService
+      .logout()
+      .catch(console.error) // Log lỗi nếu có
+      .finally(() => {
+        setIsAuthenticated(false);
+        window.location.reload();
+      });
   };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <>
       <div>
