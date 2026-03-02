@@ -84,9 +84,4 @@ eslint.config.mts
 .prettierignore
 .editorconfig
 
-# ==============================
-# DOCKER FILES (không cần bên trong image)
-# ==============================
-Dockerfile
-docker-compose.yml
-.dockerignore
+
