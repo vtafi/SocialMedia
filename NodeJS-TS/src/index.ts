@@ -24,6 +24,7 @@ import './utils/s3'
 
 config()
 const app = express()
+app.set('trust proxy', 1)
 const PORT = process.env.PORT || 8386
 const httpServer = createServer(app)
 
@@ -44,7 +45,9 @@ const corsOptions = {
       callback(new Error('Not allowed by CORS'))
     }
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
 }
 
 const io = new Server(httpServer, {
@@ -55,6 +58,9 @@ initFolder()
 
 // Swagger documentation setup
 const swaggerDocument = YAML.parse(readFileSync(join(__dirname, '../API_DOCUMENT.yaml'), 'utf8'))
+
+// Handle Preflight Requests
+app.options('*', cors(corsOptions))
 
 // CORS configuration
 app.use(cors(corsOptions))
