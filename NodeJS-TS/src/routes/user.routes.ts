@@ -45,27 +45,6 @@ const usersRouter = Router()
 */
 usersRouter.post('/login', loginValidator, wrapAsync(loginController))
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /*
   Description: OAuth Google
   Path: /users/oauth/google
@@ -88,7 +67,7 @@ usersRouter.post('/register', registerValidator, wrapAsync(registerController))
   Headers: { Authorization: 'Bearer <access_token>' }
   Body: { refreshToken: string }
 */
-usersRouter.post('/logout', accessTokenValidator, refreshTokenValidator, wrapAsync(logoutController))
+usersRouter.post('/logout', wrapAsync(logoutController))
 
 /*
   Description: Verify email

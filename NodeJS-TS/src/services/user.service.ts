@@ -138,9 +138,11 @@ export const UserService = {
       this.signRefreshToken({ user_id, verify })
     ])
   },
-  async logout(refreshToken: string) {
-    const result = await RefreshTokenModel.deleteOne({ token: refreshToken })
-    console.log('Logout result:', result)
+  async logout(refreshToken?: string) {
+    if (refreshToken) {
+      const result = await RefreshTokenModel.deleteOne({ token: refreshToken })
+      console.log('Logout result:', result)
+    }
     return {
       message: userMessages.LOGOUT_SUCCESSFUL
     }

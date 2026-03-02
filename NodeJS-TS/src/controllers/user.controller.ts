@@ -69,9 +69,9 @@ export const logoutController = async (req: Request<ParamsDictionary, any, Logou
   const refresh_token = req.cookies?.refresh_token || req.body?.refresh_token
   const result = await UserService.logout(refresh_token)
 
-  // Clear cả 2 cookies
-  res.clearCookie('access_token', { path: '/' })
-  res.clearCookie('refresh_token', { path: '/' })
+  // Clear cả 2 cookies với cùng options lúc set
+  res.clearCookie('access_token', cookieOptions)
+  res.clearCookie('refresh_token', cookieOptions)
 
   res.status(200).json(result)
 }
