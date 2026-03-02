@@ -34,6 +34,19 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Copy docker-compose to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "NodeJS-TS/docker-compose.yml"
+          target: "~/NodeJS-TS"
+          strip_components: 1
+
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -45,5 +58,5 @@ jobs:
             cd ~/NodeJS-TS
             echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/twitter:latest
-            docker-compose up -d --no-deps --build backend
+            docker-compose up -d --no-deps backend
             docker image prune -f
