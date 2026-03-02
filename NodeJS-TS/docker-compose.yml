@@ -57,9 +57,9 @@ services:
     # KHÔNG map port ra ngoài host -> Nginx Proxy Manager sẽ forward traffic
     # qua proxy-network (xem phần networks bên dưới)
 
-    # Mount thư mục uploads để file upload của user không bị mất khi redeploy
+    # DÙNG NAMED VOLUME ĐỂ GIẢI QUYẾT TRIỆT ĐỂ LỖI QUYỀN (EACCES)
     volumes:
-      - ./uploads:/usr/src/app/uploads
+      - twitter_uploads:/usr/src/app/uploads
 
     networks:
       # Kết nối vào internal network để giao tiếp với MongoDB
@@ -81,6 +81,10 @@ volumes:
   # MongoDB data volume - Docker quản lý, dữ liệu không mất khi container restart
   mongo_data:
     name: booking_mongo_data
+
+  # Named Volume mới dành cho thư mục chứa ảnh (Docker sẽ tự động xử lý quyền Đọc/Ghi)
+  twitter_uploads:
+    name: twitter_uploads_data
 
 # ----------------------------------------------------------
 # Networks
