@@ -16,9 +16,9 @@ services:
 
     # Biến môi trường để tạo user admin cho MongoDB (tuỳ chọn nhưng nên có)
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
-      MONGO_INITDB_DATABASE: ${MONGO_DB_NAME}
+      MONGO_INITDB_ROOT_USERNAME: ${DB_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${DB_PASSWORD}
+      MONGO_INITDB_DATABASE: ${DB_NAME}
 
     volumes:
       # Lưu dữ liệu MongoDB ra ngoài container để không mất khi restart
@@ -44,7 +44,6 @@ services:
     # THAY THẾ ĐOẠN BUILD BẰNG IMAGE DƯỚI ĐÂY
     image: ${DOCKERHUB_USERNAME}/twitter:latest
 
-    container_name: booking_backend
     restart: unless-stopped
 
     # Đảm bảo file .env này tồn tại trên EC2 (lệnh echo trong GitHub Actions đã làm việc này)
