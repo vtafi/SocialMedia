@@ -26,11 +26,29 @@ config()
 const app = express()
 const PORT = process.env.PORT || 8386
 const httpServer = createServer(app)
+
+// Allow multiple origins (e.g. localhost for dev, Vercel/DuckDNS for prod)
+const allowedOrigins = [
+  process.env.CLIENT_REDIRECT_URL,
+  'http://localhost:5173',
+  'https://social-media-pi-mauve.vercel.app'
+].filter(Boolean) // Remove undefined/null values
+
+const corsOptions = {
+  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+    // allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true)
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
+  credentials: true
+}
+
 const io = new Server(httpServer, {
-  cors: {
-    origin: process.env.CLIENT_REDIRECT_URL,
-    credentials: true
-  }
+  cors: corsOptions
 })
 
 initFolder()
@@ -38,13 +56,8 @@ initFolder()
 // Swagger documentation setup
 const swaggerDocument = YAML.parse(readFileSync(join(__dirname, '../API_DOCUMENT.yaml'), 'utf8'))
 
-// CORS configuration - explicitly allow frontend origin
-app.use(
-  cors({
-    origin: process.env.CLIENT_REDIRECT_URL, // Tự động đọc link Vercel hoặc Localhost từ file .env
-    credentials: true
-  })
-)
+// CORS configuration
+app.use(cors(corsOptions))
 app.use(express.json())
 app.use(cookieParser())
 

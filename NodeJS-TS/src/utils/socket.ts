@@ -16,10 +16,23 @@ interface AuthSocket extends Socket {
 // Store online users: userId -> socketId
 const onlineUsers = new Map<string, string>()
 
+const allowedOrigins = [
+  process.env.CLIENT_REDIRECT_URL,
+  'http://localhost:5173',
+  'https://social-media-pi-mauve.vercel.app'
+].filter(Boolean) as string[]
+
 export const initializeSocket = (httpServer: HTTPServer) => {
   const io = new Server(httpServer, {
     cors: {
-      origin: process.env.CLIENT_REDIRECT_URL || 'http://localhost:5173',
+      origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+        if (!origin) return callback(null, true)
+        if (allowedOrigins.indexOf(origin) !== -1) {
+          callback(null, true)
+        } else {
+          callback(new Error('Not allowed by CORS'))
+        }
+      },
       credentials: true
     }
   })
