@@ -30,6 +30,7 @@ jobs:
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/twitter:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
   deploy-to-ec2:
     needs: build-and-push
     runs-on: ubuntu-latest
@@ -53,21 +54,21 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
-         script: |
+          script: |
             mkdir -p ~/NodeJS-TS
             cd ~/NodeJS-TS
-            
+
             # 1. Tạo file .env từ secret
             echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
-            
-            # 2. Đảm bảo network proxy tồn tại (tránh lỗi nếu chưa tạo)
+
+            # 2. Đảm bảo network proxy tồn tại
             docker network inspect proxy-network >/dev/null 2>&1 || docker network create proxy-network
-            
+
             # 3. Pull image mới nhất
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/twitter:latest
-            
-            # 4. Triển khai (Dùng --env-file để ép đọc biến môi trường từ file vừa tạo)
+
+            # 4. Triển khai
             docker-compose --env-file .env up -d --no-deps backend
-            
+
             # 5. Dọn dẹp
             docker image prune -f
