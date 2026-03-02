@@ -26,8 +26,8 @@ config()
 
 const cookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax' as const,
+  secure: true, // Must be true for sameSite: 'none' (HTTPS required)
+  sameSite: 'none' as const, // Required for cross-origin cookies
   path: '/'
 }
 
