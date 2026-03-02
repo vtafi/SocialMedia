@@ -24,7 +24,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./NodeJs
+          context: ./NodeJS-TS
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/twitter:latest
           cache-from: type=gha
