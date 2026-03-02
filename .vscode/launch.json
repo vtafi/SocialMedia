@@ -5,12 +5,19 @@
   "version": "0.2.0",
   "configurations": [
     {
+<<<<<<< HEAD
       "type": "node",
       "request": "launch",
       "name": "Launch Program",
       "skipFiles": ["<node_internals>/**"],
       "program": "${workspaceFolder}\\NodeJS-TS\\src\\middlewares\\users.middlewares.ts",
       "outFiles": ["${workspaceFolder}/**/*.js"]
+=======
+      "command": "npm run dev",
+      "name": "Dev debug",
+      "request": "launch",
+      "type": "node-terminal"
+>>>>>>> vtafi
     }
   ]
 }

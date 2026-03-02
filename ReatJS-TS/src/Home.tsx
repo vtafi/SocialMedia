@@ -1,5 +1,6 @@
 import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
+<<<<<<< HEAD
 import { MediaPlayer, MediaProvider } from "@vidstack/react";
 import {
   defaultLayoutIcons,
@@ -30,6 +31,10 @@ const getOauthGoogleUrl = () => {
   const qs = new URLSearchParams(options);
   return `${rootUrl}?${qs.toString()}`;
 };
+=======
+
+import getOauthGoogleUrl from "./components/auth/Login";
+>>>>>>> vtafi
 
 function Home() {
   const isAuthenticated = Boolean(localStorage.getItem("access_token"));
@@ -60,6 +65,7 @@ function Home() {
           <a href={oauthURL}>Login with Google</a>
         )}
       </div>
+<<<<<<< HEAD
       <h2>Video Stream</h2>
       <video controls width={500} height={500}>
         <source
@@ -78,6 +84,8 @@ function Home() {
           icons={defaultLayoutIcons}
         />
       </MediaPlayer>
+=======
+>>>>>>> vtafi
     </>
   );
 }

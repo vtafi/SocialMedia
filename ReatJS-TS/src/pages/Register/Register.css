@@ -1,0 +1,425 @@
+/* Import Google Fonts */
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap");
+
+/* CSS Variables */
+:root {
+  --primary-green: #1b4332;
+  --off-white: #f9f8f6;
+  --forest-accent: #2d6a4f;
+  --stone-text: #4a4a4a;
+  --deep-forest: #081c15;
+  --sage-soft: #dce3de;
+}
+
+/* Container */
+.register-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--off-white);
+  overflow: hidden;
+}
+
+.register-content {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+}
+
+/* Left Panel - Branding */
+.register-left-panel {
+  position: relative;
+  flex: 1;
+  display: none;
+  background-color: var(--off-white);
+  border-right: 1px solid #f3f4f6;
+  overflow: hidden;
+  align-items: center;
+  justify-content: center;
+}
+
+.register-gradient-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #e8ece9 0%, #d1dad5 100%);
+  z-index: 0;
+}
+
+.register-line-art-overlay {
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 50 Q 25 25, 50 50 T 100 50' stroke='%231B4332' stroke-width='0.25' fill='none' opacity='0.15'/%3E%3Cpath d='M0 60 Q 25 35, 50 60 T 100 60' stroke='%231B4332' stroke-width='0.25' fill='none' opacity='0.1'/%3E%3C/svg%3E");
+  background-size: 120px 120px;
+  opacity: 0.4;
+  z-index: 0;
+}
+
+.register-branding {
+  position: relative;
+  z-index: 10;
+  padding: 4rem;
+  max-width: 36rem;
+  text-align: left;
+}
+
+.register-brand-icon {
+  margin-bottom: 3rem;
+  color: var(--primary-green);
+}
+
+.register-brand-title {
+  font-size: 3.5rem;
+  font-weight: 400;
+  font-family: "Playfair Display", serif;
+  color: var(--deep-forest);
+  margin-bottom: 2rem;
+  line-height: 1.1;
+}
+
+.register-brand-title-italic {
+  font-style: italic;
+}
+
+.register-brand-subtitle {
+  font-size: 1.25rem;
+  color: var(--stone-text);
+  font-weight: 300;
+  line-height: 1.6;
+  margin-bottom: 2.5rem;
+  max-width: 28rem;
+}
+
+.register-features {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.register-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.3s ease;
+}
+
+.register-feature-item:hover {
+  transform: translateX(4px);
+}
+
+.register-feature-item:hover .register-feature-line {
+  background-color: var(--primary-green);
+}
+
+.register-feature-line {
+  width: 1px;
+  height: 2rem;
+  background-color: rgba(27, 67, 50, 0.2);
+  transition: background-color 0.3s ease;
+}
+
+.register-feature-text {
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--primary-green);
+  font-weight: 500;
+}
+
+/* Right Panel - Form */
+.register-right-panel {
+  flex: 1;
+  background-color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  position: relative;
+  overflow-y: auto;
+}
+
+.register-form-container {
+  width: 100%;
+  max-width: 28rem;
+  margin: auto 0;
+}
+
+.register-form-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.register-form-header h2 {
+  font-size: 1.875rem;
+  font-family: "Playfair Display", serif;
+  color: var(--deep-forest);
+  margin-bottom: 1rem;
+}
+
+.register-form-header p {
+  font-size: 0.875rem;
+  color: var(--stone-text);
+  font-weight: 300;
+  margin-top: 1rem;
+}
+
+/* Error Banner */
+.register-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background-color: #fee2e2;
+  color: #dc2626;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+}
+
+/* Form */
+.register-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.register-form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.register-input-group {
+  position: relative;
+}
+
+.register-label {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-weight: 600;
+  color: #9ca3af;
+  margin-bottom: 0.25rem;
+}
+
+.register-input {
+  appearance: none;
+  display: block;
+  width: 100%;
+  padding: 0.625rem 0;
+  border: 0;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: transparent;
+  color: var(--deep-forest);
+  font-size: 0.875rem;
+  transition: all 0.3s ease;
+  font-family: "Inter", sans-serif;
+}
+
+.register-input::placeholder {
+  color: #d1d5db;
+}
+
+.register-input:focus {
+  outline: none;
+  border-bottom-color: var(--primary-green);
+}
+
+.register-input[type="date"] {
+  cursor: pointer;
+}
+
+.register-input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(20%) sepia(10%) saturate(1500%) hue-rotate(100deg)
+    brightness(20%) contrast(80%);
+  opacity: 0.5;
+  cursor: pointer;
+}
+
+.register-input-error {
+  border-bottom-color: #dc2626;
+}
+
+.register-input-error-text {
+  display: block;
+  font-size: 0.75rem;
+  color: #dc2626;
+  margin-top: 0.375rem;
+}
+
+/* Submit Button */
+.register-submit-btn {
+  width: 100%;
+  padding: 1rem;
+  background-color: var(--primary-green);
+  color: white;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.5s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.register-submit-btn:hover {
+  background-color: var(--forest-accent);
+}
+
+.register-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.register-submit-arrow {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Divider */
+.register-divider {
+  position: relative;
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+.register-divider::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: #f3f4f6;
+}
+
+.register-divider span {
+  position: relative;
+  background-color: white;
+  padding: 0 1rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #9ca3af;
+}
+
+/* Social Buttons */
+.register-social-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.register-social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  padding: 0.5rem;
+}
+
+.register-social-btn:hover {
+  color: var(--primary-green);
+}
+
+.register-social-btn svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* Sign In Link */
+.register-signin-text {
+  text-align: center;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  font-weight: 300;
+}
+
+.register-signin-link {
+  font-weight: 600;
+  color: var(--primary-green);
+  text-decoration: underline;
+  text-decoration-color: rgba(27, 67, 50, 0.2);
+  text-underline-offset: 4px;
+  transition: all 0.2s ease;
+}
+
+.register-signin-link:hover {
+  color: var(--forest-accent);
+  text-decoration-color: var(--forest-accent);
+}
+
+/* Footer */
+.register-footer {
+  position: absolute;
+  bottom: 1.5rem;
+  width: 100%;
+  padding: 0 6rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: #9ca3af;
+}
+
+.register-footer-links {
+  display: none;
+  gap: 2rem;
+}
+
+.register-footer-links a {
+  color: #9ca3af;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.register-footer-links a:hover {
+  color: var(--primary-green);
+}
+
+/* Responsive Design */
+@media (min-width: 1024px) {
+  .register-left-panel {
+    display: flex;
+  }
+
+  .register-footer-links {
+    display: flex;
+  }
+
+  .register-form-header {
+    text-align: left;
+  }
+}
+
+@media (max-width: 1023px) {
+  .register-content {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .register-right-panel {
+    padding: 3rem 1.5rem;
+  }
+
+  .register-footer {
+    position: static;
+    margin-top: 2rem;
+    justify-content: center;
+    padding: 0 1.5rem;
+  }
+}
