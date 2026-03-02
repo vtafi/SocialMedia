@@ -4,3 +4,6 @@ dist/
 .env.production
 .env.local
 uploads/
+NodeJS-TS/.env*
+node_modules/
+dist/
