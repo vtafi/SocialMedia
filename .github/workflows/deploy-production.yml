@@ -25,6 +25,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./NodeJS-TS
+          file: ./NodeJS-TS/Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/twitter:latest
           cache-from: type=gha
@@ -40,8 +41,8 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            mkdir -p ~/NodeJs
-            cd ~/NodeJs
+            mkdir -p ~/NodeJS-TS
+            cd ~/NodeJS-TS
             echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/twitter:latest
             docker-compose up -d --no-deps --build backend
