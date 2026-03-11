@@ -1,16 +1,14 @@
 import { ObjectId, Schema, model } from 'mongoose'
 
-// Interface vẫn giữ nguyên
 export interface RefreshToken {
   _id?: ObjectId
   token: string
-  expiresAt?: Date // 👈 CẦN CÓ để kiểm tra hết hạn
+  expiresAt?: Date
   isRevoked?: boolean
   createdAt?: Date
   user_id: ObjectId
 }
 
-// Schema đã bỏ trường _id thừa
 export const refreshTokenSchema = new Schema<RefreshToken>(
   {
     user_id: {
