@@ -1,72 +1,66 @@
-import { useEffect, useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
-
-import getOauthGoogleUrl from "./components/auth/Login/SocialLogin";
+import { useState, useCallback, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import Navbar from "./components/home/Navbar";
+import PostComposer from "./components/home/PostComposer";
+import FeedTabs from "./components/home/FeedTabs";
+import PostFeed from "./components/home/PostFeed";
+import RightSidebar from "./components/home/RightSidebar";
 import { authService } from "./services/auth.service";
 
-function Home() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
-    authService.isAuthenticated(),
+const Home = () => {
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<"for_you" | "following">(
+    "for_you",
   );
-  const [loading, setLoading] = useState<boolean>(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Luôn thử fetch /users/me khi vào trang để kiểm tra session cookie bằng backend
-    // Điều này để phục hồi trạng thái sau khi Redirect từ OAuth Google
     authService
       .getMe()
       .then((profile) => {
         authService.saveAuthData(profile);
-        setIsAuthenticated(true);
+        setLoading(false);
       })
       .catch(() => {
-        setIsAuthenticated(false);
-      })
-      .finally(() => {
-        setLoading(false);
+        navigate("/login");
       });
+  }, [navigate]);
+
+  const handlePostCreated = useCallback(() => {
+    setRefreshKey((k) => k + 1);
   }, []);
 
-  const oauthURL = getOauthGoogleUrl();
-
-  const logout = () => {
-    authService
-      .logout()
-      .catch(console.error) // Log lỗi nếu có
-      .finally(() => {
-        setIsAuthenticated(false);
-        window.location.reload();
-      });
-  };
+  const handleSearch = useCallback((q: string) => {
+    setSearchQuery(q);
+  }, []);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" />
+      </div>
+    );
   }
 
   return (
-    <>
-      <div>
-        <div>
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </div>
-        <div>
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </div>
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-emerald-100">
+      <Navbar onSearch={handleSearch} />
+
+      <div className="max-w-6xl mx-auto pt-6 px-4 flex justify-center gap-8 pb-20">
+        {/* Center feed */}
+        <main className="flex-1 max-w-[650px] w-full">
+          <PostComposer onPostCreated={handlePostCreated} />
+          <FeedTabs activeTab={activeTab} onChange={setActiveTab} />
+          <PostFeed tab={activeTab} refreshKey={refreshKey} />
+        </main>
+
+        {/* Right sidebar */}
+        <RightSidebar searchQuery={searchQuery} />
       </div>
-      <h1>OAuth Google</h1>
-      <div>
-        {isAuthenticated ? (
-          <div>
-            <p>Xin chào, bạn đã login thành công</p>
-            <button onClick={logout}>Click để logout</button>
-          </div>
-        ) : (
-          <a href={oauthURL}>Login with Google</a>
-        )}
-      </div>
-    </>
+    </div>
   );
-}
+};
 
 export default Home;

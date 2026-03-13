@@ -4,6 +4,7 @@ import { useForm } from "../../hooks/useForm";
 import { emailRule, passwordRule } from "../../utils/validation";
 import { authService } from "../../services/auth.service";
 import "./Login.css";
+import getOauthGoogleUrl from "../../components/auth/Login";
 
 interface LoginFormValues {
   email: string;
@@ -61,9 +62,8 @@ const Login: React.FC = () => {
   });
 
   const handleGoogleLogin = () => {
-    // Generate Google OAuth URL
-    const googleOAuthUrl = `${import.meta.env.VITE_API_URL || "http://localhost:8386"}/users/oauth/google`;
-    window.location.href = googleOAuthUrl;
+    const oauthURL = getOauthGoogleUrl();
+    window.location.href = oauthURL;
   };
 
   return (
