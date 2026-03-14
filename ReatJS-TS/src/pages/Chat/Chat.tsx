@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import socket from "./socket";
+import socket from "../../utils/socket";
 
 export default function Chat() {
   const Profile = JSON.parse(localStorage.getItem("profile") || "{}");

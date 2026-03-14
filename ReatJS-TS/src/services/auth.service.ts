@@ -13,13 +13,31 @@ interface RegisterData {
   date_of_birth: string;
 }
 
-interface UserProfile {
+export interface UserProfile {
   _id: string;
   name: string;
   email: string;
   username?: string;
   avatar?: string;
+  cover_photo?: string;
+  bio?: string;
+  location?: string;
+  website?: string;
+  date_of_birth?: string;
   verify: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface UpdateMeData {
+  name?: string;
+  username?: string;
+  bio?: string;
+  location?: string;
+  website?: string;
+  avatar?: string;
+  cover_photo?: string;
+  date_of_birth?: string;
 }
 
 interface AuthResponse {
@@ -33,24 +51,19 @@ export const authService = {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     const response = await fetch(`${API_BASE_URL}/users/login`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include", // Quan trọng: cho phép gửi/nhận cookies
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify(credentials),
     });
 
     if (!response.ok) {
       const error = await response.json();
-
-      // Extract specific error message from errors object
       if (error.errors) {
         const firstFieldKey = Object.keys(error.errors)[0];
         if (firstFieldKey && error.errors[firstFieldKey]?.msg) {
           throw new Error(error.errors[firstFieldKey].msg);
         }
       }
-
       throw new Error(error.message || "Login failed");
     }
 
@@ -60,9 +73,7 @@ export const authService = {
   async register(data: RegisterData): Promise<AuthResponse> {
     const response = await fetch(`${API_BASE_URL}/users/register`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify(data),
     });
@@ -78,34 +89,42 @@ export const authService = {
   async logout(): Promise<void> {
     await fetch(`${API_BASE_URL}/users/logout`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include", // Backend sẽ đọc refresh_token từ cookie
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
     });
-
-    // Xoá profile khỏi sessionStorage
     sessionStorage.removeItem("profile");
   },
 
   async getMe(): Promise<UserProfile> {
     const response = await fetch(`${API_BASE_URL}/users/me`, {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       credentials: "include",
     });
 
-    if (!response.ok) {
-      throw new Error("Failed to get profile");
-    }
+    if (!response.ok) throw new Error("Failed to get profile");
 
     const data = await response.json();
     return data.result;
   },
 
-  // Lưu thông tin user vào sessionStorage (KHÔNG lưu token - đã có trong cookie)
+  async updateMe(data: UpdateMeData): Promise<UserProfile> {
+    const response = await fetch(`${API_BASE_URL}/users/me`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || "Update failed");
+    }
+
+    const res = await response.json();
+    return res.result;
+  },
+
   saveAuthData(data: AuthResponse["result"] | UserProfile): void {
     const user = "user" in data ? data.user : data;
     sessionStorage.setItem("profile", JSON.stringify(user));
@@ -116,7 +135,6 @@ export const authService = {
     return profile ? JSON.parse(profile) : null;
   },
 
-  // Không thể đọc httpOnly cookie từ JS, dùng sessionStorage để track trạng thái login
   isAuthenticated(): boolean {
     return !!sessionStorage.getItem("profile");
   },

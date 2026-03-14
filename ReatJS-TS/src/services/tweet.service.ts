@@ -19,17 +19,22 @@ export interface Tweet {
   user_views: number;
   created_at: string;
   updated_at: string;
-  // Populated fields from aggregation
-  author?: {
+  // Backend returns "user" from $lookup aggregation (not "author")
+  user?: {
     _id: string;
     name: string;
     username: string;
     avatar: string;
+    email?: string;
+    verify?: number;
   };
-  like_count?: number;
+  // Backend returns these as plain numbers from $addFields
+  likes?: number;
+  bookmarks?: number;
   comment_count?: number;
   retweet_count?: number;
-  bookmarks_count?: number;
+  quote_count?: number;
+  // Server trả về từ $addFields (true/false dựa trên user hiện tại)
   is_liked?: boolean;
   is_bookmarked?: boolean;
 }

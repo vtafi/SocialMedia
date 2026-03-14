@@ -5,21 +5,18 @@ interface FeedTabsProps {
 
 const FeedTabs = ({ activeTab, onChange }: FeedTabsProps) => {
   return (
-    <div className="flex items-center gap-6 px-2 mb-4 border-b border-slate-200">
+    <div className="flex bg-slate-100 p-1 rounded-xl">
       {(["for_you", "following"] as const).map((tab) => (
         <button
           key={tab}
           onClick={() => onChange(tab)}
-          className={`pb-3 text-sm font-bold relative transition-colors ${
+          className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
             activeTab === tab
-              ? "text-slate-900"
+              ? "bg-white shadow-sm text-[#0F172A]"
               : "text-slate-500 hover:text-slate-700"
           }`}
         >
-          {tab === "for_you" ? "For You" : "Following"}
-          {activeTab === tab && (
-            <div className="absolute bottom-[-1px] left-0 w-full h-[3px] bg-emerald-500 rounded-t-full" />
-          )}
+          {tab === "for_you" ? "All Updates" : "Following"}
         </button>
       ))}
     </div>

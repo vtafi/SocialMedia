@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { Image as ImageIcon, MapPin, Smile, X } from "lucide-react";
+import { motion } from "framer-motion";
 import { tweetService } from "../../services/tweet.service";
 import type { Media } from "../../services/tweet.service";
 import { authService } from "../../services/auth.service";
@@ -19,17 +20,12 @@ const PostComposer = ({ onPostCreated }: PostComposerProps) => {
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
-    setPreviewUrls((prev) => [
-      ...prev,
-      ...files.map((f) => URL.createObjectURL(f)),
-    ]);
+    setPreviewUrls((prev) => [...prev, ...files.map((f) => URL.createObjectURL(f))]);
     try {
-      const uploaded = await Promise.all(
-        files.map((f) => tweetService.uploadImage(f)),
-      );
+      const uploaded = await Promise.all(files.map((f) => tweetService.uploadImage(f)));
       setMediaFiles((prev) => [...prev, ...uploaded.flat()]);
     } catch {
-      // preview still shown; will handle on submit
+      // previews remain shown
     }
   };
 
@@ -63,34 +59,36 @@ const PostComposer = ({ onPostCreated }: PostComposerProps) => {
     }
   };
 
-  const avatarUrl =
-    profile?.avatar || `https://i.pravatar.cc/150?u=${profile?._id}`;
+  const avatarUrl = profile?.avatar || `https://i.pravatar.cc/150?u=${profile?._id}`;
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm mb-6">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 mb-8"
+    >
       <div className="flex gap-4">
         <img
           src={avatarUrl}
           alt="You"
-          className="w-10 h-10 rounded-full object-cover shrink-0"
+          className="w-12 h-12 rounded-full object-cover shrink-0"
         />
-        <div className="flex-1 pt-1">
+        <div className="flex-1">
           <textarea
-            placeholder="Share a new finding or thought..."
+            placeholder="Share a new insight..."
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="w-full bg-transparent text-slate-900 placeholder-slate-400 outline-none resize-none text-lg min-h-[50px]"
+            className="w-full bg-transparent text-lg text-[#0F172A] placeholder-slate-400 outline-none resize-none min-h-[60px] font-inter pt-2"
           />
 
-          {/* Image previews */}
           {previewUrls.length > 0 && (
-            <div className="flex gap-2 flex-wrap mt-2">
+            <div className="flex gap-2 flex-wrap mt-3">
               {previewUrls.map((url, i) => (
                 <div key={i} className="relative w-20 h-20">
                   <img
                     src={url}
                     alt="preview"
-                    className="w-full h-full object-cover rounded-lg border border-slate-200"
+                    className="w-full h-full object-cover rounded-xl border border-slate-200"
                   />
                   <button
                     onClick={() => removePreview(i)}
@@ -103,7 +101,7 @@ const PostComposer = ({ onPostCreated }: PostComposerProps) => {
             </div>
           )}
 
-          <div className="flex justify-between items-center mt-2">
+          <div className="flex justify-between items-center mt-4 pt-4 border-t border-slate-100">
             <div className="flex gap-1">
               <input
                 ref={fileInputRef}
@@ -115,31 +113,29 @@ const PostComposer = ({ onPostCreated }: PostComposerProps) => {
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="p-2 rounded-full text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                className="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-[#0052FF] hover:bg-blue-50 transition-colors"
                 title="Add image"
               >
                 <ImageIcon className="w-5 h-5" />
               </button>
-              <button className="p-2 rounded-full text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors">
+              <button className="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-[#0052FF] hover:bg-blue-50 transition-colors">
                 <MapPin className="w-5 h-5" />
               </button>
-              <button className="p-2 rounded-full text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors">
+              <button className="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-[#0052FF] hover:bg-blue-50 transition-colors">
                 <Smile className="w-5 h-5" />
               </button>
             </div>
             <button
               onClick={handleSubmit}
-              disabled={
-                isSubmitting || (!content.trim() && mediaFiles.length === 0)
-              }
-              className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-full font-bold text-sm transition-colors shadow-sm"
+              disabled={isSubmitting || (!content.trim() && mediaFiles.length === 0)}
+              className="h-10 px-6 inline-flex items-center justify-center rounded-xl text-sm font-medium bg-gradient-to-r from-[#0052FF] to-[#4D7CFF] text-white hover:shadow-[0_8px_25px_-6px_rgba(0,82,255,0.5)] hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
             >
-              {isSubmitting ? "Posting..." : "Publish"}
+              {isSubmitting ? "Posting..." : "Post Update"}
             </button>
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

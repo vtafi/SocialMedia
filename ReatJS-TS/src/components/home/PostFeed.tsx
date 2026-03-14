@@ -42,7 +42,7 @@ const PostFeed = ({ refreshKey }: PostFeedProps) => {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-12 text-emerald-600">
+      <div className="flex justify-center py-12 text-[#0052FF]">
         <Loader2 className="w-7 h-7 animate-spin" />
       </div>
     );
@@ -50,14 +50,14 @@ const PostFeed = ({ refreshKey }: PostFeedProps) => {
 
   if (tweets.length === 0) {
     return (
-      <div className="text-center py-12 text-slate-500 text-sm">
-        <p>No posts yet. Follow some people or publish your first thought!</p>
+      <div className="text-center py-16 text-slate-500 text-sm">
+        <p className="font-mono">No posts yet. Follow some people or publish your first insight!</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       {tweets.map((tweet) => (
         <PostCard key={tweet._id} tweet={tweet} />
       ))}
@@ -66,7 +66,7 @@ const PostFeed = ({ refreshKey }: PostFeedProps) => {
         <button
           onClick={() => !loadingMore && fetchTweets(page + 1, false)}
           disabled={loadingMore}
-          className="w-full py-3 border border-slate-200 rounded-2xl bg-white text-emerald-600 font-semibold text-sm flex items-center justify-center gap-2 hover:bg-emerald-50 transition-colors disabled:opacity-60"
+          className="w-full py-3 border border-slate-100 rounded-3xl bg-white text-[#0052FF] font-semibold text-sm flex items-center justify-center gap-2 hover:bg-blue-50 transition-colors disabled:opacity-60 shadow-[0_8px_30px_rgb(0,0,0,0.04)]"
         >
           {loadingMore ? (
             <Loader2 className="w-4 h-4 animate-spin" />

@@ -428,7 +428,7 @@ export const TweetService = {
               $lookup: {
                 from: 'bookmarks',
                 let: { tweet_id: '$_id' },
-                pipeline: [{ $match: { $expr: { $eq: ['$tweet_id', '$$tweet_id'] } } }, { $project: { _id: 1 } }],
+                pipeline: [{ $match: { $expr: { $eq: ['$tweet_id', '$$tweet_id'] } } }, { $project: { _id: 1, user_id: 1 } }],
                 as: 'bookmarks'
               }
             },
@@ -436,7 +436,7 @@ export const TweetService = {
               $lookup: {
                 from: 'likes',
                 let: { tweet_id: '$_id' },
-                pipeline: [{ $match: { $expr: { $eq: ['$tweet_id', '$$tweet_id'] } } }, { $project: { _id: 1 } }],
+                pipeline: [{ $match: { $expr: { $eq: ['$tweet_id', '$$tweet_id'] } } }, { $project: { _id: 1, user_id: 1 } }],
                 as: 'likes'
               }
             },
@@ -452,6 +452,9 @@ export const TweetService = {
 
             {
               $addFields: {
+                // Tính is_liked/is_bookmarked TRƯỚC khi ghi đè bằng $size
+                is_liked: user_id_object ? { $in: [user_id_object, '$likes.user_id'] } : false,
+                is_bookmarked: user_id_object ? { $in: [user_id_object, '$bookmarks.user_id'] } : false,
                 bookmarks: { $size: '$bookmarks' },
                 likes: { $size: '$likes' },
                 retweet_count: {
@@ -481,7 +484,6 @@ export const TweetService = {
                     }
                   }
                 },
-                // Views = User views + Guest views + 1 (cái view hiện tại)
                 views: {
                   $add: ['$user_views', '$guest_views', 1]
                 }

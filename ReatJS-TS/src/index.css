@@ -1,8 +1,36 @@
+@import url('https://fonts.googleapis.com/css2?family=Calistoga&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
 @import "tailwindcss";
-@config "../tailwind.config.js";
 
-/* Optional custom colors */
+/* ── 1. Load HeroUI plugin ───────────────────────────────────────────────── */
+@plugin "./hero-plugin.ts";
+
+/* ── 2. Scan HeroUI dist so Tailwind knows every component class name ────── */
+@source "../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}";
+
+/* ── 3. Explicitly scan ALL src files ───────────────────────────────────────
+   @tailwindcss/vite only adds files to Tailwind's scanner as Vite loads
+   them into the module graph. On first page load (e.g. /login), the Home
+   page components haven't been loaded yet, so classes like max-w-[650px],
+   w-[320px], lg:flex, etc. are never generated.
+   This @source forces Tailwind to scan every file in src/ upfront.      */
+@source "./**/*.{ts,tsx,js,jsx}";
+
+/* ── 4. Dark mode variant (HeroUI uses .dark class, not media query) ─────── */
+@custom-variant dark (&:is(.dark *));
+
+/* ── 5. Project custom colors ───────────────────────────────────────────── */
 @theme {
-  --color-primary: #1b4332;
-  --color-secondary: #2d6a4f;
+  --color-primary:   #0052FF;
+  --color-secondary: #4D7CFF;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+.font-calistoga { font-family: 'Calistoga', serif; }
+.font-inter     { font-family: 'Inter', sans-serif; }
+
+.gradient-text {
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-image: linear-gradient(to right, #0052FF, #4D7CFF);
 }

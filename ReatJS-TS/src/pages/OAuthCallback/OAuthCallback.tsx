@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
-export default function Login() {
+export default function OAuthCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 

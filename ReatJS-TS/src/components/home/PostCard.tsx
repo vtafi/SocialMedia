@@ -1,10 +1,10 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import {
   MessageCircle,
   Repeat2,
   Heart,
   Bookmark,
-  Share2,
   MoreHorizontal,
 } from "lucide-react";
 import { tweetService } from "../../services/tweet.service";
@@ -17,62 +17,30 @@ interface PostCardProps {
 const formatTime = (dateStr: string) => {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins}m`;
+  if (mins < 60) return `${mins}m ago`;
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h`;
-  return `${Math.floor(hours / 24)}d`;
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
 };
 
 const highlightContent = (text: string) =>
   text.replace(
     /(#\w+|@\w+)/g,
-    '<span class="text-emerald-600 hover:underline cursor-pointer">$1</span>',
+    '<span class="text-[#0052FF] font-medium hover:underline cursor-pointer">$1</span>',
   );
-
-const ActionBtn = ({
-  icon,
-  count,
-  hoverClass,
-  textHoverClass,
-  active,
-  onClick,
-}: {
-  icon: React.ReactNode;
-  count?: number;
-  hoverClass: string;
-  textHoverClass: string;
-  active?: boolean;
-  onClick?: () => void;
-}) => (
-  <button
-    onClick={onClick}
-    className={`flex items-center gap-1.5 group transition-colors ${active ? textHoverClass : ""}`}
-  >
-    <div className={`p-2 rounded-full transition-colors ${hoverClass}`}>
-      {icon}
-    </div>
-    {count !== undefined && count > 0 && (
-      <span
-        className={`text-sm font-medium transition-colors ${textHoverClass}`}
-      >
-        {count}
-      </span>
-    )}
-  </button>
-);
 
 const PostCard = ({ tweet }: PostCardProps) => {
   const [liked, setLiked] = useState(tweet.is_liked ?? false);
-  const [likeCount, setLikeCount] = useState(tweet.like_count ?? 0);
+  const [likeCount, setLikeCount] = useState(tweet.likes ?? 0);
   const [bookmarked, setBookmarked] = useState(tweet.is_bookmarked ?? false);
 
-  const authorName = tweet.author?.name ?? "Unknown";
-  const authorHandle = tweet.author?.username
-    ? `@${tweet.author.username}`
-    : "@user";
+  // Backend trả về field "user" (từ $lookup aggregation), không phải "author"
+  const author = tweet.user;
+  const authorName = author?.name || author?.username || author?.email?.split("@")[0] || "Unknown";
+  const authorHandle = author?.username ? `@${author.username}` : "@user";
   const avatarUrl =
-    tweet.author?.avatar ||
-    `https://i.pravatar.cc/150?u=${tweet.author?._id ?? tweet.user_id}`;
+    author?.avatar ||
+    `https://i.pravatar.cc/150?u=${author?._id ?? tweet.user_id}`;
 
   const handleLike = async () => {
     const was = liked;
@@ -101,50 +69,52 @@ const PostCard = ({ tweet }: PostCardProps) => {
   };
 
   return (
-    <article className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm hover:shadow-md transition-shadow">
+    <motion.article
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: "spring", stiffness: 300, damping: 24 }}
+      className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 group"
+    >
       {/* Header */}
-      <div className="flex justify-between items-start mb-3">
-        <div className="flex items-center gap-3">
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex items-center gap-4">
           <img
             src={avatarUrl}
             alt={authorName}
-            className="w-10 h-10 rounded-full object-cover border border-slate-100"
+            className="w-12 h-12 rounded-full object-cover"
           />
           <div>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="font-bold text-[15px] text-slate-900 hover:underline cursor-pointer">
-                {authorName}
-              </span>
-              <span className="text-slate-500 text-sm hidden sm:block">
-                {authorHandle}
-              </span>
-              <span className="text-slate-400 text-sm">
-                · {formatTime(tweet.created_at)}
-              </span>
+            <h3 className="font-bold text-[#0F172A] text-base hover:underline cursor-pointer">
+              {authorName}
+            </h3>
+            <div className="flex items-center gap-2 text-sm text-slate-500 font-mono mt-0.5">
+              <span>{authorHandle}</span>
+              <span>•</span>
+              <span>{formatTime(tweet.created_at)}</span>
             </div>
           </div>
         </div>
-        <button className="text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 p-1.5 rounded-full transition-colors shrink-0">
+        <button className="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-[#0052FF] hover:bg-blue-50 transition-colors">
           <MoreHorizontal className="w-5 h-5" />
         </button>
       </div>
 
       {/* Content */}
       <div
-        className="text-slate-800 text-[15px] leading-relaxed break-words mb-3"
+        className="text-[#0F172A] text-[16px] leading-relaxed mb-4 break-words"
         dangerouslySetInnerHTML={{ __html: highlightContent(tweet.content) }}
       />
 
       {/* Media */}
       {tweet.medias && tweet.medias.length > 0 && (
-        <div className="rounded-xl overflow-hidden border border-slate-100 mb-3">
+        <div className="rounded-2xl overflow-hidden mb-5 border border-slate-100">
           {tweet.medias.map((m, i) =>
             m.type === 0 ? (
               <img
                 key={i}
                 src={m.url}
                 alt="media"
-                className="w-full object-cover max-h-[400px]"
+                className="w-full object-cover max-h-[400px] hover:scale-105 transition-transform duration-700"
                 loading="lazy"
               />
             ) : null,
@@ -153,53 +123,46 @@ const PostCard = ({ tweet }: PostCardProps) => {
       )}
 
       {/* Actions */}
-      <div className="flex items-center justify-between pt-1 text-slate-500">
-        <div className="flex gap-2 sm:gap-4">
-          <ActionBtn
-            icon={<MessageCircle className="w-5 h-5" />}
-            count={tweet.comment_count}
-            hoverClass="hover:bg-emerald-50 hover:text-emerald-600"
-            textHoverClass="group-hover:text-emerald-600"
-          />
-          <ActionBtn
-            icon={<Repeat2 className="w-5 h-5" />}
-            count={tweet.retweet_count}
-            hoverClass="hover:bg-green-50 hover:text-green-500"
-            textHoverClass="group-hover:text-green-500"
-          />
-          <ActionBtn
-            icon={
-              <Heart
-                className="w-5 h-5"
-                fill={liked ? "currentColor" : "none"}
-              />
-            }
-            count={likeCount}
-            hoverClass="hover:bg-pink-50 hover:text-pink-600"
-            textHoverClass="group-hover:text-pink-600"
-            active={liked}
-            onClick={handleLike}
-          />
-          <ActionBtn
-            icon={
-              <Bookmark
-                className="w-5 h-5"
-                fill={bookmarked ? "currentColor" : "none"}
-              />
-            }
-            hoverClass="hover:bg-sky-50 hover:text-sky-500"
-            textHoverClass="group-hover:text-sky-500"
-            active={bookmarked}
-            onClick={handleBookmark}
-          />
-        </div>
-        <ActionBtn
-          icon={<Share2 className="w-5 h-5" />}
-          hoverClass="hover:bg-emerald-50 hover:text-emerald-600"
-          textHoverClass="group-hover:text-emerald-600"
-        />
+      <div className="flex items-center gap-2 border-t border-slate-100 pt-4">
+        {/* Comment */}
+        <button className="flex-1 flex items-center justify-center gap-2 h-10 rounded-xl text-slate-500 hover:text-[#0052FF] hover:bg-blue-50 transition-colors text-sm font-mono">
+          <MessageCircle className="w-5 h-5" />
+          {(tweet.comment_count ?? 0) > 0 && <span>{tweet.comment_count}</span>}
+        </button>
+
+        {/* Repost */}
+        <button className="flex-1 flex items-center justify-center gap-2 h-10 rounded-xl text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors text-sm font-mono">
+          <Repeat2 className="w-5 h-5" />
+          {(tweet.retweet_count ?? 0) > 0 && <span>{tweet.retweet_count}</span>}
+        </button>
+
+
+        {/* Like */}
+        <button
+          onClick={handleLike}
+          className={`flex-1 flex items-center justify-center gap-2 h-10 rounded-xl transition-colors text-sm font-mono ${
+            liked
+              ? "text-rose-500 bg-rose-50"
+              : "text-slate-500 hover:text-rose-500 hover:bg-rose-50"
+          }`}
+        >
+          <Heart className="w-5 h-5" fill={liked ? "currentColor" : "none"} />
+          {likeCount > 0 && <span>{likeCount}</span>}
+        </button>
+
+        {/* Bookmark */}
+        <button
+          onClick={handleBookmark}
+          className={`flex-1 flex items-center justify-center gap-2 h-10 rounded-xl transition-colors text-sm font-mono ${
+            bookmarked
+              ? "text-sky-500 bg-sky-50"
+              : "text-slate-500 hover:text-sky-500 hover:bg-sky-50"
+          }`}
+        >
+          <Bookmark className="w-5 h-5" fill={bookmarked ? "currentColor" : "none"} />
+        </button>
       </div>
-    </article>
+    </motion.article>
   );
 };
 
