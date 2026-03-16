@@ -1,9 +1,10 @@
-import { Schema } from 'mongoose'
+import mongoose from 'mongoose'
 import Conversation from '~/models/schemas/conversation.schema'
 import Message from '~/models/schemas/message.schema'
 import UserModel from '~/models/user.model'
 
-const ObjectId = Schema.Types.ObjectId
+const { ObjectId } = mongoose.Types
+
 export const ChatService = {
   // Tạo hoặc lấy conversation giữa 2 users
   async getOrCreateConversation(user1Id: string, user2Id: string) {
@@ -11,32 +12,22 @@ export const ChatService = {
     let conversation = await Conversation.findOne({
       'participants.userId': { $all: [new ObjectId(user1Id), new ObjectId(user2Id)] },
       isActive: true
-    })
+    }).populate('participants.userId', 'name avatar username')
 
     if (!conversation) {
-      // Lấy thông tin users
       const [user1, user2] = await Promise.all([
-        UserModel.findById(user1Id).select('name avatar'),
-        UserModel.findById(user2Id).select('name avatar')
+        UserModel.findById(user1Id).select('name avatar username'),
+        UserModel.findById(user2Id).select('name avatar username')
       ])
 
       if (!user1 || !user2) {
         throw new Error('User not found')
       }
 
-      // Tạo conversation mới
       conversation = await Conversation.create({
         participants: [
-          {
-            userId: new ObjectId(user1Id),
-            name: user1.name,
-            avatar: user1.avatar
-          },
-          {
-            userId: new ObjectId(user2Id),
-            name: user2.name,
-            avatar: user2.avatar
-          }
+          { userId: new ObjectId(user1Id), name: user1.name, avatar: user1.avatar ?? '' },
+          { userId: new ObjectId(user2Id), name: user2.name, avatar: user2.avatar ?? '' }
         ],
         unreadCount: new Map([
           [user1Id, 0],
@@ -44,17 +35,21 @@ export const ChatService = {
         ]),
         isActive: true
       })
+
+      // Populate sau khi tạo
+      conversation = await conversation.populate('participants.userId', 'name avatar username')
     }
 
     return conversation
   },
 
-  // Lấy tất cả conversations của user
+  // Lấy tất cả conversations của user (có populate để frontend lấy thông tin người kia)
   async getUserConversations(userId: string) {
     const conversations = await Conversation.find({
       'participants.userId': new ObjectId(userId),
       isActive: true
     })
+      .populate('participants.userId', 'name avatar username')
       .sort({ updatedAt: -1 })
       .lean()
 
@@ -69,10 +64,10 @@ export const ChatService = {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .populate('senderId', 'full_name avatar role')
+      .populate('senderId', 'name avatar username')
       .lean()
 
-    return messages.reverse() // Reverse to get oldest first
+    return messages.reverse()
   },
 
   // Đánh dấu messages là đã đọc
@@ -83,13 +78,9 @@ export const ChatService = {
         senderId: { $ne: new ObjectId(userId) },
         isRead: false
       },
-      {
-        isRead: true,
-        readAt: new Date()
-      }
+      { isRead: true, readAt: new Date() }
     )
 
-    // Reset unread count
     await Conversation.findByIdAndUpdate(conversationId, {
       [`unreadCount.${userId}`]: 0
     })
@@ -97,33 +88,26 @@ export const ChatService = {
     return result
   },
 
-  // Tìm kiếm users để chat (Doctors hoặc Patients)
-  async searchUsersToChat(currentUserId: string, searchTerm: string, role?: number) {
-    const query: any = {
-      _id: { $ne: new ObjectId(currentUserId) },
-      verify: 1 // Only verified users
-    }
-
-    if (role !== undefined) {
-      query.role = role
+  // Tìm kiếm users để chat
+  async searchUsersToChat(currentUserId: string, searchTerm: string, _role?: number) {
+    const query: Record<string, unknown> = {
+      _id: { $ne: new ObjectId(currentUserId) }
     }
 
     if (searchTerm) {
       query.$or = [
-        { full_name: { $regex: searchTerm, $options: 'i' } },
+        { name: { $regex: searchTerm, $options: 'i' } },
+        { username: { $regex: searchTerm, $options: 'i' } },
         { email: { $regex: searchTerm, $options: 'i' } }
       ]
     }
 
-    const users = await UserModel.find(query).select('full_name email avatar role').limit(20).lean()
-
+    const users = await UserModel.find(query).select('name email avatar username').limit(20).lean()
     return users
   },
 
   // Xóa conversation (soft delete)
   async deleteConversation(conversationId: string) {
-    return await Conversation.findByIdAndUpdate(conversationId, {
-      isActive: false
-    })
+    return await Conversation.findByIdAndUpdate(conversationId, { isActive: false })
   }
 }

@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
-import { Image as ImageIcon, MapPin, Smile, X } from "lucide-react";
-import { motion } from "framer-motion";
+import { Image as ImageIcon, MapPin, Smile, X, Globe, Users, ChevronDown } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { tweetService } from "../../services/tweet.service";
 import type { Media } from "../../services/tweet.service";
 import { authService } from "../../services/auth.service";
@@ -9,13 +9,34 @@ interface PostComposerProps {
   onPostCreated: () => void;
 }
 
+// 0 = Everyone, 1 = Tweet Circle
+type Audience = 0 | 1;
+
+const AUDIENCE_OPTIONS: { value: Audience; label: string; desc: string; icon: React.ReactNode }[] = [
+  {
+    value: 0,
+    label: "Everyone",
+    desc: "Anyone can see this post",
+    icon: <Globe className="w-4 h-4" />,
+  },
+  {
+    value: 1,
+    label: "Tweet Circle",
+    desc: "Only people in your circle",
+    icon: <Users className="w-4 h-4" />,
+  },
+];
+
 const PostComposer = ({ onPostCreated }: PostComposerProps) => {
   const [content, setContent] = useState("");
   const [mediaFiles, setMediaFiles] = useState<Media[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [audience, setAudience] = useState<Audience>(0);
+  const [audienceOpen, setAudienceOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const profile = authService.getProfile();
+  const selectedOption = AUDIENCE_OPTIONS.find((o) => o.value === audience)!;
 
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -41,7 +62,7 @@ const PostComposer = ({ onPostCreated }: PostComposerProps) => {
     try {
       await tweetService.createTweet({
         type: 0,
-        audience: 0,
+        audience,
         content: trimmed,
         medias: mediaFiles,
         hashtags: [],
@@ -101,7 +122,60 @@ const PostComposer = ({ onPostCreated }: PostComposerProps) => {
             </div>
           )}
 
-          <div className="flex justify-between items-center mt-4 pt-4 border-t border-slate-100">
+          {/* Audience selector */}
+          <div className="mt-3 relative">
+            <button
+              type="button"
+              onClick={() => setAudienceOpen((v) => !v)}
+              className={`inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-xs font-semibold border transition-colors ${
+                audience === 1
+                  ? "bg-purple-50 border-purple-200 text-purple-600 hover:bg-purple-100"
+                  : "bg-blue-50 border-blue-200 text-[#0052FF] hover:bg-blue-100"
+              }`}
+            >
+              {selectedOption.icon}
+              {selectedOption.label}
+              <ChevronDown className={`w-3 h-3 transition-transform ${audienceOpen ? "rotate-180" : ""}`} />
+            </button>
+
+            <AnimatePresence>
+              {audienceOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute top-9 left-0 z-20 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-100 overflow-hidden w-56"
+                >
+                  {AUDIENCE_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => { setAudience(opt.value); setAudienceOpen(false); }}
+                      className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-slate-50 transition-colors ${
+                        audience === opt.value ? "bg-slate-50" : ""
+                      }`}
+                    >
+                      <span className={`mt-0.5 ${audience === opt.value ? "text-[#0052FF]" : "text-slate-400"}`}>
+                        {opt.icon}
+                      </span>
+                      <div>
+                        <p className={`text-sm font-semibold ${audience === opt.value ? "text-[#0052FF]" : "text-[#0F172A]"}`}>
+                          {opt.label}
+                        </p>
+                        <p className="text-xs text-slate-400 mt-0.5">{opt.desc}</p>
+                      </div>
+                      {audience === opt.value && (
+                        <span className="ml-auto mt-0.5 w-2 h-2 rounded-full bg-[#0052FF] shrink-0" />
+                      )}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-100">
             <div className="flex gap-1">
               <input
                 ref={fileInputRef}

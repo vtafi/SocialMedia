@@ -18,7 +18,7 @@ const SearchService = {
     user_id: string
     media_type: MediaTypeQuery
   }) {
-    const user_id_object = new ObjectId(user_id)
+    const user_id_object = user_id ? new ObjectId(user_id) : null
     const $match: any = {
       $text: { $search: content }
     }
@@ -53,18 +53,20 @@ const SearchService = {
         }
       },
       {
-        $match: {
-          $or: [
-            { audience: TweetAudience.Everyone },
-            { user_id: user_id_object },
-            {
-              $and: [
-                { audience: TweetAudience.TweetCircle },
-                { 'author_permissions.twitter_circle': { $in: [user_id_object] } }
+        $match: user_id_object
+          ? {
+              $or: [
+                { audience: TweetAudience.Everyone },
+                { user_id: user_id_object },
+                {
+                  $and: [
+                    { audience: TweetAudience.TweetCircle },
+                    { 'author_permissions.twitter_circle': { $in: [user_id_object] } }
+                  ]
+                }
               ]
             }
-          ]
-        }
+          : { audience: TweetAudience.Everyone }
       },
 
       // -------------------------------------------------------
@@ -111,16 +113,22 @@ const SearchService = {
             {
               $lookup: {
                 from: 'bookmarks',
-                localField: '_id',
-                foreignField: 'tweet_id',
+                let: { tweet_id: '$_id' },
+                pipeline: [
+                  { $match: { $expr: { $eq: ['$tweet_id', '$$tweet_id'] } } },
+                  { $project: { _id: 1, user_id: 1 } }
+                ],
                 as: 'bookmarks'
               }
             },
             {
               $lookup: {
                 from: 'likes',
-                localField: '_id',
-                foreignField: 'tweet_id',
+                let: { tweet_id: '$_id' },
+                pipeline: [
+                  { $match: { $expr: { $eq: ['$tweet_id', '$$tweet_id'] } } },
+                  { $project: { _id: 1, user_id: 1 } }
+                ],
                 as: 'likes'
               }
             },
@@ -136,6 +144,8 @@ const SearchService = {
             // Format Output
             {
               $addFields: {
+                is_liked: user_id_object ? { $in: [user_id_object, '$likes.user_id'] } : false,
+                is_bookmarked: user_id_object ? { $in: [user_id_object, '$bookmarks.user_id'] } : false,
                 bookmarks: { $size: '$bookmarks' },
                 likes: { $size: '$likes' },
                 retweet_count: {

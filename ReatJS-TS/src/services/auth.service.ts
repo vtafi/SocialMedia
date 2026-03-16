@@ -27,6 +27,10 @@ export interface UserProfile {
   verify: number;
   created_at?: string;
   updated_at?: string;
+  follower_count?: number;
+  following_count?: number;
+  /** Trả về từ GET /users/:username — viewer đang follow user này không */
+  is_following?: boolean;
 }
 
 export interface UpdateMeData {
@@ -137,5 +141,87 @@ export const authService = {
 
   isAuthenticated(): boolean {
     return !!sessionStorage.getItem("profile");
+  },
+
+  async followUser(followed_user_id: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/users/follow`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ followed_user_id }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || "Follow failed");
+    }
+  },
+
+  async unfollowUser(followed_user_id: string): Promise<void> {
+    const response = await fetch(
+      `${API_BASE_URL}/users/unfollow/${followed_user_id}`,
+      {
+        method: "DELETE",
+        credentials: "include",
+      },
+    );
+    if (!response.ok) throw new Error("Unfollow failed");
+  },
+
+  async getUserByUsername(username: string): Promise<UserProfile | null> {
+    const response = await fetch(`${API_BASE_URL}/users/${username}`, {
+      credentials: "include",
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data.result;
+  },
+
+  async getUserById(id: string): Promise<UserProfile | null> {
+    const response = await fetch(`${API_BASE_URL}/users/id/${id}`, {
+      credentials: "include",
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data.result;
+  },
+
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    const response = await fetch(`${API_BASE_URL}/users/forgot-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "Failed to send reset email");
+    return data;
+  },
+
+  async resetPassword(
+    forgot_password_token: string,
+    new_password: string,
+    confirm_new_password: string,
+  ): Promise<{ message: string }> {
+    const response = await fetch(`${API_BASE_URL}/users/reset-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ forgot_password_token, new_password, confirm_new_password }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "Failed to reset password");
+    return data;
+  },
+
+  async searchUsers(
+    q: string,
+    page = 1,
+    limit = 10,
+  ): Promise<{ users: UserProfile[]; total: number }> {
+    const response = await fetch(
+      `${API_BASE_URL}/users/search?q=${encodeURIComponent(q)}&page=${page}&limit=${limit}`,
+      { credentials: "include" },
+    );
+    if (!response.ok) return { users: [], total: 0 };
+    const data = await response.json();
+    return data.result;
   },
 };

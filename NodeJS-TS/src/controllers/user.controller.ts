@@ -259,3 +259,28 @@ export const unfollowUserController = async (req: Request<UnfollowRequestParams>
   const result = await UserService.unfollowUser(user_id, followed_user_id)
   return res.json(result)
 }
+
+export const getPublicProfileController = async (req: Request, res: Response) => {
+  const { username } = req.params
+  const viewer_id = req.decoded_authorization?.user_id
+  const user = await UserService.getUserByUsername(username, viewer_id)
+  if (!user) return res.status(404).json({ message: 'User not found' })
+  return res.json({ result: user })
+}
+
+export const searchUsersController = async (req: Request, res: Response) => {
+  const q = (req.query.q as string) || ''
+  const limit = Number(req.query.limit) || 10
+  const page = Number(req.query.page) || 1
+  const viewer_id = req.decoded_authorization?.user_id
+  const result = await UserService.searchUsers(q, limit, page, viewer_id)
+  return res.json({ result })
+}
+
+export const getPublicProfileByIdController = async (req: Request, res: Response) => {
+  const { id } = req.params
+  const viewer_id = req.decoded_authorization?.user_id
+  const user = await UserService.getUserById(id, viewer_id)
+  if (!user) return res.status(404).json({ message: 'User not found' })
+  return res.json({ result: user })
+}

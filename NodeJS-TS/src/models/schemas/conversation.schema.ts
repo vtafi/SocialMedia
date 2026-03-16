@@ -25,10 +25,9 @@ const conversationSchema = new Schema<IConversation>(
       {
         userId: {
           type: Schema.Types.ObjectId,
-          ref: 'User',
+          ref: 'Users',
           required: true
         },
-
         name: {
           type: String,
           required: true

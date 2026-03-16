@@ -178,9 +178,9 @@ const Login: React.FC = () => {
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <label className="text-sm font-medium text-[#0F172A]">Password</label>
-                <a href="#" className="text-sm font-medium text-[#0052FF] hover:underline">
+                <Link to="/forgot-password" className="text-sm font-medium text-[#0052FF] hover:underline">
                   Forgot?
-                </a>
+                </Link>
               </div>
               <input
                 name="password"

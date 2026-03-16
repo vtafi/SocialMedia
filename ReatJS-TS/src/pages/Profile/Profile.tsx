@@ -416,13 +416,13 @@ const Profile = () => {
                   </div>
                   <div className="flex gap-2 items-baseline cursor-pointer group">
                     <span className="font-bold text-[#0F172A] text-xl group-hover:text-[#0052FF] transition-colors">
-                      —
+                      {profile.following_count ?? 0}
                     </span>
                     <span className="text-slate-500 text-sm font-medium">Following</span>
                   </div>
                   <div className="flex gap-2 items-baseline cursor-pointer group">
                     <span className="font-bold text-[#0F172A] text-xl group-hover:text-[#0052FF] transition-colors">
-                      —
+                      {profile.follower_count ?? 0}
                     </span>
                     <span className="text-slate-500 text-sm font-medium">Followers</span>
                   </div>

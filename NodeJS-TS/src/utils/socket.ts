@@ -4,9 +4,9 @@ import { verifyToken } from './jwt'
 import { TokenType } from '~/constants/enum'
 import Message from '~/models/schemas/message.schema'
 import Conversation from '~/models/schemas/conversation.schema'
-import { Schema } from 'mongoose'
+import mongoose from 'mongoose'
 
-const ObjectId = Schema.Types.ObjectId
+const { ObjectId } = mongoose.Types
 
 interface AuthSocket extends Socket {
   userId?: string
@@ -40,7 +40,14 @@ export const initializeSocket = (httpServer: HTTPServer) => {
   // Authentication middleware
   io.use(async (socket: AuthSocket, next) => {
     try {
-      const token = socket.handshake.auth.token
+      // Ưu tiên auth.token, fallback sang cookie access_token
+      let token = socket.handshake.auth.token
+
+      if (!token) {
+        const rawCookie = socket.handshake.headers.cookie || ''
+        const match = rawCookie.match(/(?:^|;\s*)access_token=([^;]+)/)
+        if (match) token = decodeURIComponent(match[1])
+      }
 
       if (!token) {
         return next(new Error('Authentication error: No token provided'))

@@ -392,14 +392,20 @@ export const UserService = {
   async getMeProfile(user_id: string) {
     const user = await UserModel.findOne(
       { _id: new ObjectId(user_id) },
-      // Tham số thứ 2 của Mongoose findOne là object projection
       {
         password: 0,
         email_verify_token: 0,
         forgot_password_token: 0
       }
     )
-    return user
+    if (!user) return user
+
+    const [follower_count, following_count] = await Promise.all([
+      FollowersModel.countDocuments({ followed_user_id: user._id }),
+      FollowersModel.countDocuments({ user_id: user._id })
+    ])
+
+    return { ...user.toObject(), follower_count, following_count }
   },
   async updateMe(user_id: string, body: UpdateMeRequestBody) {
     const updatedUser = await UserModel.findByIdAndUpdate(user_id, body, { new: true })
@@ -475,5 +481,78 @@ export const UserService = {
       followed_user_id: new ObjectId(followed_user_id)
     })
     return { message: userMessages.UNFOLLOWED_SUCCESSFULLY }
+  },
+
+  async getUserByUsername(username: string, viewer_id?: string) {
+    const user = await UserModel.findOne(
+      { username },
+      { password: 0, email_verify_token: 0, forgot_password_token: 0, twitter_circle: 0 }
+    )
+    if (!user) return null
+
+    const [follower_count, following_count, followDoc] = await Promise.all([
+      FollowersModel.countDocuments({ followed_user_id: user._id }),
+      FollowersModel.countDocuments({ user_id: user._id }),
+      viewer_id && viewer_id !== user._id.toString()
+        ? FollowersModel.findOne({ user_id: new ObjectId(viewer_id), followed_user_id: user._id })
+        : Promise.resolve(null)
+    ])
+
+    return { ...user.toObject(), follower_count, following_count, is_following: !!followDoc }
+  },
+
+  async searchUsers(q: string, limit: number, page: number, viewer_id?: string) {
+    const filter = {
+      $or: [{ name: { $regex: q, $options: 'i' } }, { username: { $regex: q, $options: 'i' } }]
+    }
+    const [users, total] = await Promise.all([
+      UserModel.find(filter, {
+        password: 0,
+        email_verify_token: 0,
+        forgot_password_token: 0,
+        twitter_circle: 0
+      })
+        .skip(limit * (page - 1))
+        .limit(limit),
+      UserModel.countDocuments(filter)
+    ])
+
+    // Gắn is_following cho từng user nếu có viewer
+    if (viewer_id) {
+      const userIds = users.map((u) => u._id)
+      const followedDocs = await FollowersModel.find({
+        user_id: new ObjectId(viewer_id),
+        followed_user_id: { $in: userIds }
+      })
+      const followedSet = new Set(followedDocs.map((f) => f.followed_user_id.toString()))
+      const usersWithFollow = users.map((u) => ({
+        ...u.toObject(),
+        is_following: followedSet.has(u._id.toString())
+      }))
+      return { users: usersWithFollow, total }
+    }
+
+    return { users, total }
+  },
+
+  async getUserById(id: string, viewer_id?: string) {
+    if (!mongoose.Types.ObjectId.isValid(id)) return null
+    const user = await UserModel.findById(id, {
+      password: 0,
+      email_verify_token: 0,
+      forgot_password_token: 0,
+      twitter_circle: 0
+    })
+    if (!user) return null
+
+    const [follower_count, following_count, followDoc] = await Promise.all([
+      FollowersModel.countDocuments({ followed_user_id: user._id }),
+      FollowersModel.countDocuments({ user_id: user._id }),
+      viewer_id && viewer_id !== user._id.toString()
+        ? FollowersModel.findOne({ user_id: new ObjectId(viewer_id), followed_user_id: user._id })
+        : Promise.resolve(null)
+    ])
+
+    return { ...user.toObject(), follower_count, following_count, is_following: !!followDoc }
   }
 }

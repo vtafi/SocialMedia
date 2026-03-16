@@ -1,14 +1,18 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import {
   MessageCircle,
   Repeat2,
   Heart,
   Bookmark,
   MoreHorizontal,
+  Globe,
+  Users,
 } from "lucide-react";
 import { tweetService } from "../../services/tweet.service";
 import type { Tweet } from "../../services/tweet.service";
+import { authService } from "../../services/auth.service";
 
 interface PostCardProps {
   tweet: Tweet;
@@ -30,6 +34,8 @@ const highlightContent = (text: string) =>
   );
 
 const PostCard = ({ tweet }: PostCardProps) => {
+  const navigate = useNavigate();
+  const me = authService.getProfile();
   const [liked, setLiked] = useState(tweet.is_liked ?? false);
   const [likeCount, setLikeCount] = useState(tweet.likes ?? 0);
   const [bookmarked, setBookmarked] = useState(tweet.is_bookmarked ?? false);
@@ -41,6 +47,20 @@ const PostCard = ({ tweet }: PostCardProps) => {
   const avatarUrl =
     author?.avatar ||
     `https://i.pravatar.cc/150?u=${author?._id ?? tweet.user_id}`;
+
+  // Navigate đến profile tác giả
+  // - Có username → /users/:username
+  // - Là chính mình (so sánh _id) → /profile
+  // - Không có username nhưng có _id → /users/id/:id
+  const handleAuthorClick = () => {
+    if (author?.username) {
+      navigate(`/users/${author.username}`);
+    } else if (author?._id && me?._id === author._id) {
+      navigate("/profile");
+    } else if (author?._id) {
+      navigate(`/users/id/${author._id}`);
+    }
+  };
 
   const handleLike = async () => {
     const was = liked;
@@ -81,16 +101,32 @@ const PostCard = ({ tweet }: PostCardProps) => {
           <img
             src={avatarUrl}
             alt={authorName}
-            className="w-12 h-12 rounded-full object-cover"
+            onClick={handleAuthorClick}
+            className="w-12 h-12 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
           />
           <div>
-            <h3 className="font-bold text-[#0F172A] text-base hover:underline cursor-pointer">
+            <h3
+              onClick={handleAuthorClick}
+              className="font-bold text-[#0F172A] text-base hover:text-[#0052FF] cursor-pointer transition-colors"
+            >
               {authorName}
             </h3>
-            <div className="flex items-center gap-2 text-sm text-slate-500 font-mono mt-0.5">
+            <div className="flex items-center gap-2 text-sm text-slate-500 font-mono mt-0.5 flex-wrap">
               <span>{authorHandle}</span>
               <span>•</span>
               <span>{formatTime(tweet.created_at)}</span>
+              <span>•</span>
+              {tweet.audience === 1 ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-50 border border-purple-200 text-purple-600 text-xs font-semibold">
+                  <Users className="w-3 h-3" />
+                  Circle
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-slate-400 text-xs">
+                  <Globe className="w-3 h-3" />
+                  Everyone
+                </span>
+              )}
             </div>
           </div>
         </div>

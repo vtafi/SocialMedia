@@ -141,10 +141,10 @@ export const tweetService = {
     return data.result;
   },
 
-  // GET /search?query=&page=&limit= — Tìm kiếm
-  async search(query: string, page = 1, limit = 10) {
+  // GET /search?content=&page=&limit= — Tìm kiếm tweet theo nội dung / hashtag
+  async searchTweets(content: string, page = 1, limit = 10): Promise<TweetFeedResponse> {
     return fetchWithAuth(
-      `${API_BASE_URL}/search?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`,
+      `${API_BASE_URL}/search?content=${encodeURIComponent(content)}&page=${page}&limit=${limit}`,
     );
   },
 };

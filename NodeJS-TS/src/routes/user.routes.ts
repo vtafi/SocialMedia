@@ -15,7 +15,10 @@ import {
   getMeController,
   updateMeController,
   followUserController,
-  unfollowUserController
+  unfollowUserController,
+  getPublicProfileController,
+  getPublicProfileByIdController,
+  searchUsersController
 } from '~/controllers/user.controller'
 import { filterMiddleware } from '~/middlewares/common.middlewares'
 import {
@@ -23,6 +26,7 @@ import {
   emailVerifyTokenValidator,
   followUserValidator,
   forgotPasswordValidator,
+  isUserLoggedInValidator,
   loginValidator,
   refreshTokenValidator,
   registerValidator,
@@ -185,4 +189,26 @@ usersRouter.delete<UnfollowRequestParams>(
 
 usersRouter.post('/find', searchByEmailController)
 usersRouter.put('/update/:id', updateUserController)
+
+/*
+  Description: Search users by name or username
+  Path: /users/search?q=&page=&limit=
+  Method: GET
+*/
+usersRouter.get('/search', isUserLoggedInValidator(accessTokenValidator), wrapAsync(searchUsersController))
+
+/*
+  Description: Get public profile by user _id
+  Path: /users/id/:id
+  Method: GET
+*/
+usersRouter.get('/id/:id', isUserLoggedInValidator(accessTokenValidator), wrapAsync(getPublicProfileByIdController))
+
+/*
+  Description: Get public profile of a user by username
+  Path: /users/:username
+  Method: GET
+*/
+usersRouter.get('/:username', isUserLoggedInValidator(accessTokenValidator), wrapAsync(getPublicProfileController))
+
 export default usersRouter

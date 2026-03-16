@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { TrendingUp, UserPlus } from "lucide-react";
-import { tweetService } from "../../services/tweet.service";
+import { authService } from "../../services/auth.service";
 
 interface TrendItem {
   category: string;
@@ -19,8 +20,9 @@ interface RightSidebarProps {
 }
 
 const RightSidebar = ({ searchQuery }: RightSidebarProps) => {
+  const navigate = useNavigate();
   const [searchResults, setSearchResults] = useState<
-    { name: string; username: string; avatar?: string }[]
+    { _id: string; name: string; username: string; avatar?: string }[]
   >([]);
 
   useEffect(() => {
@@ -28,10 +30,17 @@ const RightSidebar = ({ searchQuery }: RightSidebarProps) => {
       setSearchResults([]);
       return;
     }
-    tweetService
-      .search(searchQuery)
+    authService
+      .searchUsers(searchQuery, 1, 3)
       .then((data) => {
-        if (data?.result?.users) setSearchResults(data.result.users.slice(0, 3));
+        setSearchResults(
+          data.users.map((u) => ({
+            _id: u._id,
+            name: u.name || u.username || "User",
+            username: u.username || "",
+            avatar: u.avatar,
+          }))
+        );
       })
       .catch(() => {});
   }, [searchQuery]);
@@ -67,20 +76,21 @@ const RightSidebar = ({ searchQuery }: RightSidebarProps) => {
             <UserPlus className="w-4 h-4" /> Search Results
           </div>
           <div className="flex flex-col gap-4">
-            {searchResults.map((u, i) => (
-              <div key={i} className="flex items-center gap-3">
+            {searchResults.map((u) => (
+              <div
+                key={u._id}
+                className="flex items-center gap-3 cursor-pointer group"
+                onClick={() => u.username && navigate(`/users/${u.username}`)}
+              >
                 <img
-                  src={u.avatar || `https://i.pravatar.cc/150?u=${u.username}`}
+                  src={u.avatar || `https://i.pravatar.cc/150?u=${u._id}`}
                   alt={u.name}
-                  className="w-9 h-9 rounded-full object-cover"
+                  className="w-9 h-9 rounded-full object-cover shrink-0"
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm text-[#0F172A] truncate">{u.name}</p>
-                  <p className="text-xs text-slate-500 font-mono">@{u.username}</p>
+                  <p className="font-semibold text-sm text-[#0F172A] group-hover:text-[#0052FF] transition-colors truncate">{u.name}</p>
+                  {u.username && <p className="text-xs text-slate-500 font-mono">@{u.username}</p>}
                 </div>
-                <button className="text-xs font-bold text-[#0052FF] border border-[#0052FF]/40 px-3 py-1 rounded-full hover:bg-[#0052FF] hover:text-white transition-colors shrink-0">
-                  Follow
-                </button>
               </div>
             ))}
           </div>

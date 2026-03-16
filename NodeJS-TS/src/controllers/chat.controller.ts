@@ -1,12 +1,13 @@
 import { Request, Response, NextFunction } from 'express'
+import { TokenPayload } from '~/models/requests/User.requests'
 import { ChatService } from '~/services/chat.service'
 
 export const getOrCreateConversationController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { user }: any = req
+    const { user_id } = req.decoded_authorization as TokenPayload
     const { targetUserId } = req.body
 
-    const conversation = await ChatService.getOrCreateConversation(user._id.toString(), targetUserId)
+    const conversation = await ChatService.getOrCreateConversation(user_id, targetUserId)
 
     return res.json({
       message: 'Conversation retrieved successfully',
@@ -19,8 +20,8 @@ export const getOrCreateConversationController = async (req: Request, res: Respo
 
 export const getUserConversationsController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { user }: any = req
-    const conversations = await ChatService.getUserConversations(user._id.toString())
+    const { user_id } = req.decoded_authorization as TokenPayload
+    const conversations = await ChatService.getUserConversations(user_id)
 
     return res.json({
       message: 'Conversations retrieved successfully',
@@ -49,10 +50,10 @@ export const getConversationMessagesController = async (req: Request, res: Respo
 
 export const markMessagesAsReadController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { user }: any = req
+    const { user_id } = req.decoded_authorization as TokenPayload
     const { conversationId } = req.params
 
-    await ChatService.markMessagesAsRead(conversationId, user._id.toString())
+    await ChatService.markMessagesAsRead(conversationId, user_id)
 
     return res.json({
       message: 'Messages marked as read'
@@ -64,11 +65,11 @@ export const markMessagesAsReadController = async (req: Request, res: Response, 
 
 export const searchUsersController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { user }: any = req
+    const { user_id } = req.decoded_authorization as TokenPayload
     const { search = '', role } = req.query
 
     const users = await ChatService.searchUsersToChat(
-      user._id.toString(),
+      user_id,
       search as string,
       role ? Number(role) : undefined
     )
