@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express'
-import { TokenPayload } from '~/models/requests/User.requests'
+import { TokenPayload } from '~/models/requests/user.requests'
 import { ChatService } from '~/services/chat.service'
 
 export const getOrCreateConversationController = async (req: Request, res: Response, next: NextFunction) => {
