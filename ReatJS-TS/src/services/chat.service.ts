@@ -1,5 +1,4 @@
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:8386";
+import { authFetch } from "../utils/apiClient";
 
 export interface ChatUser {
   _id: string;
@@ -30,19 +29,16 @@ export interface IConversation {
   updatedAt: string;
 }
 
-const authFetch = (url: string, options?: RequestInit) =>
-  fetch(url, { credentials: "include", ...options });
-
 export const chatService = {
   async getConversations(): Promise<IConversation[]> {
-    const res = await authFetch(`${API_BASE_URL}/chat/conversations`);
+    const res = await authFetch(`/chat/conversations`);
     if (!res.ok) return [];
     const json = await res.json();
     return json.data ?? [];
   },
 
   async getOrCreateConversation(targetUserId: string): Promise<IConversation | null> {
-    const res = await authFetch(`${API_BASE_URL}/chat/conversations`, {
+    const res = await authFetch(`/chat/conversations`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ targetUserId }),
@@ -54,7 +50,7 @@ export const chatService = {
 
   async getMessages(conversationId: string, limit = 50, skip = 0): Promise<IMessage[]> {
     const res = await authFetch(
-      `${API_BASE_URL}/chat/conversations/${conversationId}/messages?limit=${limit}&skip=${skip}`,
+      `/chat/conversations/${conversationId}/messages?limit=${limit}&skip=${skip}`,
     );
     if (!res.ok) return [];
     const json = await res.json();
@@ -62,14 +58,14 @@ export const chatService = {
   },
 
   async markAsRead(conversationId: string): Promise<void> {
-    await authFetch(`${API_BASE_URL}/chat/conversations/${conversationId}/read`, {
+    await authFetch(`/chat/conversations/${conversationId}/read`, {
       method: "PATCH",
     });
   },
 
   async searchUsers(q: string): Promise<ChatUser[]> {
     const res = await authFetch(
-      `${API_BASE_URL}/chat/users/search?search=${encodeURIComponent(q)}`,
+      `/chat/users/search?search=${encodeURIComponent(q)}`,
     );
     if (!res.ok) return [];
     const json = await res.json();
@@ -77,7 +73,7 @@ export const chatService = {
   },
 
   async deleteConversation(conversationId: string): Promise<void> {
-    await authFetch(`${API_BASE_URL}/chat/conversations/${conversationId}`, {
+    await authFetch(`/chat/conversations/${conversationId}`, {
       method: "DELETE",
     });
   },

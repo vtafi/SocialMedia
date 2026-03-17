@@ -13,7 +13,6 @@ import bookmarkRouter from './routes/bookmark.routes'
 import likeRouter from './routes/like.routes'
 import searchRouter from './routes/search.routes'
 import { createServer } from 'node:http'
-import { Server } from 'socket.io'
 import chatRouter from './routes/chat.routes'
 import { initializeSocket } from './utils/socket'
 import swaggerUi from 'swagger-ui-express'
@@ -50,9 +49,6 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
 }
 
-const io = new Server(httpServer, {
-  cors: corsOptions
-})
 
 initFolder()
 

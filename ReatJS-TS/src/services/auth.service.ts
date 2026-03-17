@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8386";
+import { authFetch } from "../utils/apiClient";
 
 interface LoginCredentials {
   email: string;
@@ -53,10 +53,9 @@ interface AuthResponse {
 
 export const authService = {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    const response = await fetch(`${API_BASE_URL}/users/login`, {
+    const response = await authFetch("/users/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      credentials: "include",
       body: JSON.stringify(credentials),
     });
 
@@ -75,10 +74,9 @@ export const authService = {
   },
 
   async register(data: RegisterData): Promise<AuthResponse> {
-    const response = await fetch(`${API_BASE_URL}/users/register`, {
+    const response = await authFetch("/users/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      credentials: "include",
       body: JSON.stringify(data),
     });
 
@@ -91,32 +89,21 @@ export const authService = {
   },
 
   async logout(): Promise<void> {
-    await fetch(`${API_BASE_URL}/users/logout`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-    });
+    await authFetch("/users/logout", { method: "POST" });
     sessionStorage.removeItem("profile");
   },
 
   async getMe(): Promise<UserProfile> {
-    const response = await fetch(`${API_BASE_URL}/users/me`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-    });
-
+    const response = await authFetch("/users/me");
     if (!response.ok) throw new Error("Failed to get profile");
-
     const data = await response.json();
     return data.result;
   },
 
   async updateMe(data: UpdateMeData): Promise<UserProfile> {
-    const response = await fetch(`${API_BASE_URL}/users/me`, {
+    const response = await authFetch("/users/me", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      credentials: "include",
       body: JSON.stringify(data),
     });
 
@@ -144,10 +131,9 @@ export const authService = {
   },
 
   async followUser(followed_user_id: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/users/follow`, {
+    const response = await authFetch("/users/follow", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      credentials: "include",
       body: JSON.stringify({ followed_user_id }),
     });
     if (!response.ok) {
@@ -157,36 +143,28 @@ export const authService = {
   },
 
   async unfollowUser(followed_user_id: string): Promise<void> {
-    const response = await fetch(
-      `${API_BASE_URL}/users/unfollow/${followed_user_id}`,
-      {
-        method: "DELETE",
-        credentials: "include",
-      },
-    );
+    const response = await authFetch(`/users/unfollow/${followed_user_id}`, {
+      method: "DELETE",
+    });
     if (!response.ok) throw new Error("Unfollow failed");
   },
 
   async getUserByUsername(username: string): Promise<UserProfile | null> {
-    const response = await fetch(`${API_BASE_URL}/users/${username}`, {
-      credentials: "include",
-    });
+    const response = await authFetch(`/users/${username}`);
     if (!response.ok) return null;
     const data = await response.json();
     return data.result;
   },
 
   async getUserById(id: string): Promise<UserProfile | null> {
-    const response = await fetch(`${API_BASE_URL}/users/id/${id}`, {
-      credentials: "include",
-    });
+    const response = await authFetch(`/users/id/${id}`);
     if (!response.ok) return null;
     const data = await response.json();
     return data.result;
   },
 
   async forgotPassword(email: string): Promise<{ message: string }> {
-    const response = await fetch(`${API_BASE_URL}/users/forgot-password`, {
+    const response = await authFetch("/users/forgot-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
@@ -201,7 +179,7 @@ export const authService = {
     new_password: string,
     confirm_new_password: string,
   ): Promise<{ message: string }> {
-    const response = await fetch(`${API_BASE_URL}/users/reset-password`, {
+    const response = await authFetch("/users/reset-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ forgot_password_token, new_password, confirm_new_password }),
@@ -216,9 +194,8 @@ export const authService = {
     page = 1,
     limit = 10,
   ): Promise<{ users: UserProfile[]; total: number }> {
-    const response = await fetch(
-      `${API_BASE_URL}/users/search?q=${encodeURIComponent(q)}&page=${page}&limit=${limit}`,
-      { credentials: "include" },
+    const response = await authFetch(
+      `/users/search?q=${encodeURIComponent(q)}&page=${page}&limit=${limit}`,
     );
     if (!response.ok) return { users: [], total: 0 };
     const data = await response.json();

@@ -8,4 +8,14 @@ export default defineConfig({
   server: {
     port: 5173,
   },
+  build: {
+    // Tắt source maps ở production — ẩn source code khỏi DevTools
+    sourcemap: false,
+    // Minify bằng esbuild (nhanh hơn terser, đã có sẵn với Vite)
+    minify: "esbuild",
+  },
+  esbuild: {
+    // Tự động xóa console.log và debugger khỏi bundle production
+    drop: ["console", "debugger"],
+  },
 });

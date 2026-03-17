@@ -1,5 +1,4 @@
 import { ObjectId } from 'mongodb'
-import { RegisterRequestBody } from '~/models/requests/user.requests'
 import { faker } from '@faker-js/faker'
 import { TweetRequestBody } from '~/models/requests/tweet.requests'
 import { TweetAudience, TweetType, UserVerifyStatus } from '~/constants/enum'
@@ -7,6 +6,7 @@ import { hashPassword } from './crypto'
 import UserModel from '~/models/user.model'
 import FollowersModel from '~/models/follower.model'
 import { TweetService } from '~/services/tweet.service'
+import { RegisterRequestBody } from '~/models/requests/user.requests'
 
 // Config
 const PASSWORD = 'tai123'

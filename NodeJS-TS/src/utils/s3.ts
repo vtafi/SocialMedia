@@ -15,10 +15,8 @@ if (!region || !accessKeyId || !secretAccessKey) {
 // Instantiate the S3 Client
 const s3Client = new S3Client({
   region,
-  credentials: {
-    accessKeyId,
-    secretAccessKey
-  }
+  // Nếu có key trong .env thì dùng, nếu không có (trên EC2), SDK sẽ tự tìm IAM Role
+  credentials: accessKeyId && secretAccessKey ? { accessKeyId, secretAccessKey } : undefined
 })
 // s3Client.send(new ListBucketsCommand()).then((data) => console.log(data.Buckets))
 export const uploadFileToS3 = ({

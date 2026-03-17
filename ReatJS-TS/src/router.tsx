@@ -6,6 +6,7 @@ import Chat from "./pages/Chat";
 import Register from "./pages/Register/Register";
 import Profile from "./pages/Profile";
 import GuestRoute from "./components/auth/GuestRoute";
+import PrivateRoute from "./components/auth/PrivateRoute";
 import SearchPage from "./pages/Search";
 import UserProfilePage from "./pages/UserProfile";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -54,15 +55,27 @@ const router = createBrowserRouter([
   },
   {
     path: "/chat",
-    element: <Chat />,
+    element: (
+      <PrivateRoute>
+        <Chat />
+      </PrivateRoute>
+    ),
   },
   {
     path: "/profile",
-    element: <Profile />,
+    element: (
+      <PrivateRoute>
+        <Profile />
+      </PrivateRoute>
+    ),
   },
   {
     path: "/search",
-    element: <SearchPage />,
+    element: (
+      <PrivateRoute>
+        <SearchPage />
+      </PrivateRoute>
+    ),
   },
   {
     path: "/users/:username",

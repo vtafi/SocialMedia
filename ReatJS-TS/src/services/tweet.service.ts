@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8386";
+import { authFetch } from "../utils/apiClient";
 
 export interface Media {
   url: string;
@@ -19,7 +19,6 @@ export interface Tweet {
   user_views: number;
   created_at: string;
   updated_at: string;
-  // Backend returns "user" from $lookup aggregation (not "author")
   user?: {
     _id: string;
     name: string;
@@ -28,13 +27,11 @@ export interface Tweet {
     email?: string;
     verify?: number;
   };
-  // Backend returns these as plain numbers from $addFields
   likes?: number;
   bookmarks?: number;
   comment_count?: number;
   retweet_count?: number;
   quote_count?: number;
-  // Server trả về từ $addFields (true/false dựa trên user hiện tại)
   is_liked?: boolean;
   is_bookmarked?: boolean;
 }
@@ -59,92 +56,71 @@ export interface CreateTweetData {
   medias?: Media[];
 }
 
-const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
-  const response = await fetch(url, {
+const fetchJSON = async (path: string, options: RequestInit = {}) => {
+  const response = await authFetch(path, {
     ...options,
-    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...options.headers,
     },
   });
-
   if (!response.ok) {
-    const error = await response
-      .json()
-      .catch(() => ({ message: "Request failed" }));
+    const error = await response.json().catch(() => ({ message: "Request failed" }));
     throw new Error(error.message || "Request failed");
   }
-
   return response.json();
 };
 
 export const tweetService = {
-  // GET /tweets?page=&limit= — News feed
   async getTweets(page = 1, limit = 10): Promise<TweetFeedResponse> {
-    return fetchWithAuth(`${API_BASE_URL}/tweets?page=${page}&limit=${limit}`);
+    return fetchJSON(`/tweets?page=${page}&limit=${limit}`);
   },
 
-  // POST /tweets — Tạo tweet mới
-  async createTweet(
-    data: CreateTweetData,
-  ): Promise<{ message: string; result: Tweet }> {
-    return fetchWithAuth(`${API_BASE_URL}/tweets`, {
+  async createTweet(data: CreateTweetData): Promise<{ message: string; result: Tweet }> {
+    return fetchJSON(`/tweets`, {
       method: "POST",
       body: JSON.stringify(data),
     });
   },
 
-  // POST /likes — Like tweet
   async likeTweet(tweetId: string): Promise<void> {
-    return fetchWithAuth(`${API_BASE_URL}/likes`, {
+    return fetchJSON(`/likes`, {
       method: "POST",
       body: JSON.stringify({ tweet_id: tweetId }),
     });
   },
 
-  // DELETE /likes/:tweet_id — Unlike tweet
   async unlikeTweet(tweetId: string): Promise<void> {
-    return fetchWithAuth(`${API_BASE_URL}/likes/${tweetId}`, {
-      method: "DELETE",
-    });
+    return fetchJSON(`/likes/${tweetId}`, { method: "DELETE" });
   },
 
-  // POST /bookmarks — Bookmark tweet
   async bookmarkTweet(tweetId: string): Promise<void> {
-    return fetchWithAuth(`${API_BASE_URL}/bookmarks`, {
+    return fetchJSON(`/bookmarks`, {
       method: "POST",
       body: JSON.stringify({ tweet_id: tweetId }),
     });
   },
 
-  // DELETE /bookmarks/:tweet_id — Xoá bookmark
   async removeBookmark(tweetId: string): Promise<void> {
-    return fetchWithAuth(`${API_BASE_URL}/bookmarks/${tweetId}`, {
-      method: "DELETE",
-    });
+    return fetchJSON(`/bookmarks/${tweetId}`, { method: "DELETE" });
   },
 
-  // POST /medias/upload-image — Upload ảnh
+  // Upload ảnh — dùng authFetch trực tiếp (FormData, không set Content-Type)
   async uploadImage(file: File): Promise<Media[]> {
     const formData = new FormData();
     formData.append("image", file);
-
-    const response = await fetch(`${API_BASE_URL}/medias/upload-image`, {
+    const response = await authFetch(`/medias/upload-image`, {
       method: "POST",
-      credentials: "include",
       body: formData,
     });
-
     if (!response.ok) throw new Error("Upload failed");
     const data = await response.json();
     return data.result;
   },
 
-  // GET /search?content=&page=&limit= — Tìm kiếm tweet theo nội dung / hashtag
   async searchTweets(content: string, page = 1, limit = 10): Promise<TweetFeedResponse> {
-    return fetchWithAuth(
-      `${API_BASE_URL}/search?content=${encodeURIComponent(content)}&page=${page}&limit=${limit}`,
+    return fetchJSON(
+      `/search?content=${encodeURIComponent(content)}&page=${page}&limit=${limit}`,
     );
   },
 };
